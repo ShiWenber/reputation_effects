@@ -1,0 +1,5 @@
+Donate Recipient:b c beta gamma lambda,NR,SR,AR,UR
+C,-c b,beta-c b-gamma,-c b,beta-c b-gamma
+OC,-(1-lambda)*c (1-lambda)*b,beta-c b-gamma,lambda*beta-(1-lambda)*c (1-lambda)*b-lambda*gamma,beta-(1-lambda)*c (1-lambda)*b-gamma
+OD,0 0,lambda*(beta-c) lambda*(b-gamma),beta -gamma,beta -gamma
+D,0 0,0 0,beta -gamma,beta -gamma
