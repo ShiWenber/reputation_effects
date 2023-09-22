@@ -25,8 +25,7 @@ class Player {
   std::vector<Action> actions;
   std::vector<double> actionPossibility;  //< 随机动作概率（混合策略）
 
-  PayoffMatrix payoffMatrix;
-  std::mt19937 gen;  //< 随机数生成器
+  std::mt19937 gen;  //< double 随机数生成器
 
   std::map<std::string, std::vector<std::vector<std::string>>>
       strategyTables;  //< 每种策略的动作函数表
@@ -40,6 +39,7 @@ class Player {
   std::map<std::string, double> vars;
 
  public:
+  Player(const Player &other);
   Player(std::string name, int score, std::vector<Action> actions);
   ~Player();
 
@@ -70,11 +70,6 @@ class Player {
     return this->actionPossibility;
   }
   void setActionPossibility(const std::vector<double> &actionPossibility);
-
-  PayoffMatrix getPayoffMatrix() const { return this->payoffMatrix; }
-  void setPayoffMatrix(const PayoffMatrix &payoffMatrix) {
-    this->payoffMatrix = payoffMatrix;
-  }
 
   Strategy getStrategy() const { return this->strategy; }
   void setStrategy(const Strategy &strategy) { this->strategy = strategy; }
@@ -151,7 +146,14 @@ class Player {
     return this->strategyTables;
   }
   std::vector<Strategy> getStrategies() const { return this->strategies; }
-  void setStrategies(const std::vector<Strategy> &strategies) { this->strategies = strategies; }
+  void setStrategies(const std::vector<Strategy> &strategies) {
+    this->strategies = strategies;
+  }
+
+  // 随机性行为，基于对象内部的随机数生成器，由于使用了 随机数生成器，随机行为不能用const修饰
+  Strategy getRandomOtherStrategy(std::vector<Strategy> &alterStrategy);
+  // 抛出一个0-1的概率
+  double getProbability();
 };
 
 #endif  // !PLAYER_HPP

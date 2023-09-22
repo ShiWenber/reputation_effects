@@ -17,7 +17,6 @@ aux_source_directory(src SRC_FILES)
 
 add_executable(${CMAKE_PROJECT_NAME} main.cpp ${SRC_FILES})
 
-
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE muparser::muparser)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE fmt::fmt)
 

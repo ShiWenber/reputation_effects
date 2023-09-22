@@ -10,6 +10,21 @@
 std::map<std::string, double> Player::commonInfo =
     std::map<std::string, double>();
 
+//  拷贝构造
+Player::Player(const Player& other)
+    : name(other.name),
+      score(other.score),
+      actions(other.actions),
+      actionPossibility(other.actionPossibility),
+      strategyTables(other.strategyTables),
+      strategyFunc(other.strategyFunc),
+      strategy(other.strategy),
+      strategies(other.strategies),
+      vars(other.vars) {
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  this->gen = std::mt19937(seed);  //< 以时间为种子生成随机数
+}
+
 Player::Player(std::string name, int score, std::vector<Action> actions) {
   this->name = name;
   this->score = score;
@@ -21,26 +36,26 @@ Player::Player(std::string name, int score, std::vector<Action> actions) {
 
 Player::~Player() {}
 
-/**
- * @brief 用轮盘法选择动作
- *
- * @return Action 抽取出的动作，也是本轮采取的动作
- */
-Action Player::play() {
-  // 用时间种子生成一个0到1之间的随机数
-  std::uniform_real_distribution<double> randomDis(0, 1);
-  double randomNum = randomDis(this->gen);
+// /**
+//  * @brief 用轮盘法选择动作
+//  *
+//  * @return Action 抽取出的动作，也是本轮采取的动作
+//  */
+// Action Player::play() {
+//   // 用时间种子生成一个0到1之间的随机数
+//   std::uniform_real_distribution<double> randomDis(0, 1);
+//   double randomNum = randomDis(this->gen);
 
-  // 轮盘法选择动作
-  double sum = 0;
-  for (int i = 0; i < this->actionPossibility.size(); i++) {
-    sum += this->actionPossibility[i];
-    if (randomNum < sum) {
-      return this->actions[i];
-    }
-  }
-  return this->actions[this->actions.size() - 1];
-}
+//   // 轮盘法选择动作
+//   double sum = 0;
+//   for (int i = 0; i < this->actionPossibility.size(); i++) {
+//     sum += this->actionPossibility[i];
+//     if (randomNum < sum) {
+//       return this->actions[i];
+//     }
+//   }
+//   return this->actions[this->actions.size() - 1];
+// }
 
 /**
  * @brief
@@ -67,7 +82,7 @@ Action Player::donate(std::string recipientReputation) {
 }
 
 Action Player::reward(std::string donorActionName) {
-    // 从形参构建key
+  // 从形参构建key
   std::string key = this->strategy.getName();
   key += "!" + donorActionName;
 
@@ -102,21 +117,21 @@ void Player::setActionPossibility(
 
 /**
  * @brief 从 strategy 中查找指定 name 的 strategy
- * 
- * @param strategyName 
+ *
+ * @param strategyName
  */
 void Player::setStrategy(const std::string& strategyName) {
-    bool existed = false;
-    for (Strategy s : this->strategies) {
-        if (strategyName == s.getName()) {
-            this->strategy = s;
-            existed = true;
-            break;
-        }
+  bool existed = false;
+  for (Strategy s : this->strategies) {
+    if (strategyName == s.getName()) {
+      this->strategy = s;
+      existed = true;
+      break;
     }
-    if (existed != true) {
-        throw "not exist: " + strategyName;
-    }
+  }
+  if (existed != true) {
+    throw "not exist: " + strategyName;
+  }
 }
 
 /**
@@ -166,7 +181,8 @@ void Player::loadStrategy(const std::string& strategyPath) {
     // 生成strategyFunc，用来加速查表
     std::string key = strategyName;
     // 按列遍历所有的strategyTable
-    for (int col = 0; col < this->strategyTables[strategyName][0].size(); col++) {
+    for (int col = 0; col < this->strategyTables[strategyName][0].size();
+         col++) {
       // 按行遍历所有的strategyTable
       for (int row = 0; row < this->strategyTables[strategyName].size();
            row++) {
@@ -179,7 +195,7 @@ void Player::loadStrategy(const std::string& strategyPath) {
                 this->strategyTables[strategyName][row][col]) {
               this->strategyFunc[key] = action;
               // 还原 key 值为初始值
-              key = strategyName; 
+              key = strategyName;
               // this->strategyFunc[key] = action.getName();
               finded = 1;
               break;
@@ -196,3 +212,23 @@ void Player::loadStrategy(const std::string& strategyPath) {
     }
   }
 }
+
+/**
+ * @brief  使用自带的随机数生成器生成一个随机的策略(等概率的)
+ * 
+ * @param alterStrategy 
+ * @return Strategy 
+ */
+// TODO: --
+Strategy Player::getRandomOtherStrategy(std::vector<Strategy> &alterStrategy) {
+  std::uniform_int_distribution<int> randomDis(0, alterStrategy.size() - 1);
+  int randInt = randomDis(this->gen);
+  return alterStrategy[randInt];
+}
+
+double Player::getProbability() {
+  std::uniform_real_distribution<double> randomDis(0, 1);
+  double randDouble = randomDis(this->gen);
+  return randDouble;
+}
+
