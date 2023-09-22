@@ -14,10 +14,12 @@
 #include <fmt/os.h>
 #include <fmt/ranges.h>
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <map>
 #include <string>
+// #include <execution>
 
 #include "Action.hpp"
 #include "Norm.hpp"
@@ -28,6 +30,7 @@
 #define REPUTATION_STR "reputation"
 
 using namespace std;
+using namespace std::chrono;
 
 /**
  * @brief 费米函数，用来计算策略转变概率
@@ -38,12 +41,31 @@ using namespace std;
  * @return double
  */
 double fermi(double payoff_current, double payoff_new, double s) {
-  double res = 1 / (1 + exp((payoff_current - payoff_new) / s));
+  double res = 1 / (1 + exp((payoff_current - payoff_new) * s));
   // if (res > 0.97) {
   //   cout << payoff_current << "," << payoff_new << "," << s << endl;
   // }
+  // cout << payoff_current << "," << payoff_new << "," << s << endl;
   // cout << res << endl;
   return res;
+}
+
+/**
+ * @brief 应用转变
+ *
+ * @param strategyName2Id
+ * @param player2StrategyChange
+ */
+void applyStrategyChange(
+    unordered_map<string, set<int>> &strategyName2Id,
+    unordered_map<int, pair<string, string>> player2StrategyChange) {
+  for (auto it = player2StrategyChange.begin();
+       it != player2StrategyChange.end(); it++) {
+    // it->second.first 是 from
+    // it->second.second 是 to
+    strategyName2Id[it->second.first].erase(it->first);
+    strategyName2Id[it->second.second].insert(it->first);
+  }
 }
 
 string printStatistics(vector<Player> donors, vector<Player> recipients,
@@ -85,24 +107,22 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
 }
 
 int main() {
+  // 记录运行时间
+  system_clock::time_point start = chrono::system_clock::now();
+
   // 博弈参数
   int stepNum = 1000;
   int population = 400;  // 人数，这里作为博弈对数，100表示100对博弈者
-  int s = 1;             // 费米函数参数
+  double s = 1;             // 费米函数参数
 
   int b = 4;      // 公共参数
   int beta = 3;   // 公共参数
   int c = 1;      // 公共参数
   int gamma = 1;  // 公共参数
-
-  string normName = "norm";
+  int normId = 10;
+  string normName = "norm" + to_string(normId);
 
   cout << "---" << endl;
-
-  // 加载norm
-  string normPath = "./" + normName + ".csv";
-  Norm norm(normPath);
-  fmt::print("norm: {}\n", norm.getNormTableStr());
 
   // 加载payoffMatrix
   cout << "---------->>" << endl;
@@ -211,6 +231,14 @@ int main() {
   recipient.addVar(REPUTATION_STR, 1);
   fmt::print("recipient vars: {}\n", recipient.getVars());
 
+  // for (int normNumber = 1; normNumber < 16; normNumber++) {
+  //   normName = "norm" + to_string(normNumber);
+
+  // 加载norm
+  string normPath = "./norm/" + normName + ".csv";
+  Norm norm(normPath);
+  fmt::print("norm: {}\n", norm.getNormTableStr());
+
   // 以上面的博弈者对作模板生成population对博弈者
   vector<Player> donors;
   vector<Player> recipients;
@@ -258,7 +286,8 @@ int main() {
   string logPath = "stepNum-" + to_string(stepNum) + "_population-" +
                    to_string(population) + "_s-" + to_string(s) + "_b-" +
                    to_string(b) + "_beta-" + to_string(beta) + "_c-" +
-                   to_string(c) + "_gamma-" + to_string(gamma) + ".csv";
+                   to_string(c) + "_gamma-" + to_string(gamma) + "_norm-" +
+                   normName + ".csv";
   auto out = fmt::output_file(logPath);
   // 生成表头
   string line = "step";
@@ -274,9 +303,15 @@ int main() {
   out.print("{}\n", logLine);
 
   // 1. 固定博弈者对交互 TODO: 不固定博弈者对轮流交互取平均
-
   for (int step = 0; step < stepNum; step++) {
-    for (int i = 0; i < population; i++) {
+    unordered_map<int, pair<string, string>> donor2StrateChange;
+    unordered_map<int, pair<string, string>> recipientId2StrateChange;
+
+    // // for_each 并行
+    // vector<int> ids(population);
+    // std::for_each(std::execution::par, ids.begin(), ids.end(), [&](int i) {
+
+    for (int i = 0; i < population; i++) { // --------------------->>3
       // cout << endl << "-------------------- step " << step << endl;
       // 第一阶段 donors[i] 行动
       Action donorAction = donors[i].donate(
@@ -343,19 +378,10 @@ int main() {
       // TODO: 可以改为增量式的，由set自己维护自己的平均收益可以减少一层循环
       if (donors[i].getProbability() <
           fermi(donors[i].getScore(), avgDonorScore, s)) {
-        // 更新策略并更新每个策略的set
-        // 从原来的set中删除
-        // fmt::print("----\nold: {}",
-        // strategyName2DonorId[donors[i].getStrategy().getName()]);
-        strategyName2DonorId[donors[i].getStrategy().getName()].erase(i);
-        // fmt::print("-> {}\n",
-        // strategyName2DonorId[donors[i].getStrategy().getName()]);
-        // 在新的set中添加
-        // fmt::print("old: {}",
-        // strategyName2DonorId[newDonorStrategy.getName()]);
-        strategyName2DonorId[newDonorStrategy.getName()].insert(i);
-        // fmt::print("-> {}\n",
-        // strategyName2DonorId[newDonorStrategy.getName()]);
+        // 记录转变
+        donor2StrateChange[i] = make_pair(donors[i].getStrategy().getName(),
+                                          newDonorStrategy.getName());
+
         donors[i].setStrategy(newDonorStrategy);
       }
 
@@ -386,27 +412,25 @@ int main() {
           sum / strategyName2RecipientId[newRecipientStrategy.getName()].size();
       if (recipients[i].getProbability() <
           fermi(recipients[i].getScore(), avgRecipientScore, s)) {
-        // 更新策略并更新每个策略的set
-        // 从原来的set中删除
-        // fmt::print("----\nold: {}",
-        // strategyName2RecipientId[recipients[i].getStrategy().getName()]);
-        strategyName2RecipientId[recipients[i].getStrategy().getName()].erase(
-            i);
-        // fmt::print("-> {}\n",
-        // strategyName2RecipientId[recipients[i].getStrategy().getName()]);
-        // 在新的set中添加
-        // fmt::print("old: {}",
-        // strategyName2RecipientId[newRecipientStrategy.getName()]);
-        strategyName2RecipientId[newRecipientStrategy.getName()].insert(i);
-        // fmt::print("-> {}\n",
-        // strategyName2RecipientId[newRecipientStrategy.getName()]);
+        // 记录转变
+        recipientId2StrateChange[i] =
+            make_pair(recipients[i].getStrategy().getName(),
+                      newRecipientStrategy.getName());
+
         recipients[i].setStrategy(newRecipientStrategy);
       }
-    }
+    } // ----------<<3
+
+    // }); // 并行
+
+    // 第六阶段，本轮末尾应用所有转变
+    applyStrategyChange(strategyName2DonorId, donor2StrateChange);
+    applyStrategyChange(strategyName2RecipientId, recipientId2StrateChange);
+
     // 生成log
-    out.print("{}\n",
-              printStatistics(donors, recipients, donorStrategies,
-                              recipientStrategies, population, step+1, false));
+    out.print("{}\n", printStatistics(donors, recipients, donorStrategies,
+                                      recipientStrategies, population, step + 1,
+                                      false));
   }
 
   for (int i = 0; i < population; i++) {
@@ -416,6 +440,10 @@ int main() {
 
   printStatistics(donors, recipients, donorStrategies, recipientStrategies,
                   population, stepNum, true);
+  // }
 
+  system_clock::time_point end = system_clock::now();
+  cout << "time: " << duration_cast<microseconds>(end - start).count() / 1e6
+       << "s" << endl;
   return 0;
 }

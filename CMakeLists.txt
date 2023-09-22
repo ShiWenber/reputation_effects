@@ -10,6 +10,7 @@ enable_testing()
 
 find_package(muparser CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(TBB CONFIG REQUIRED)
 
 include_directories(include)
 
@@ -19,6 +20,7 @@ add_executable(${CMAKE_PROJECT_NAME} main.cpp ${SRC_FILES})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE muparser::muparser)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE fmt::fmt)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE TBB::tbb TBB::tbbmalloc)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
