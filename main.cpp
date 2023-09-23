@@ -15,6 +15,7 @@
 #include <fmt/ranges.h>
 
 #include <chrono>
+#include <climits>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -153,9 +154,15 @@ int main() {
   int c = 1;      // 公共参数
   int gamma = 1;  // 公共参数
   int normId = 10;
+
+
+  for (int normId = 1; normId < 16;  normId++) {
+
   string normName = "norm" + to_string(normId);
 
   cout << "---" << endl;
+
+
 
   // 加载payoffMatrix
   cout << "---------->>" << endl;
@@ -328,7 +335,7 @@ int main() {
                    to_string(b) + "_beta-" + to_string(beta) + "_c-" +
                    to_string(c) + "_gamma-" + to_string(gamma) + "_norm-" +
                    normName + ".csv";
-  auto out = fmt::output_file(logDir+logPath);
+  auto out = fmt::output_file(logDir + logPath);
   // 生成表头
   string line = "step";
   for (Strategy donorS : donorStrategies) {
@@ -410,23 +417,37 @@ int main() {
 
       Strategy newDonorStrategy =
           donors[i].getRandomOtherStrategy(donorAlterStrategy);
-      // 从采用该策略的人中求平均值
-      double sum = 0;
+      // 随机抽取一个采用该策略的人，用其该轮收益进行费米更新
+      double p = donors[i].getProbability();
+      // 由于int的强制转换是向下取整，所以这里的randId可能会取不到最后一个id，所以不用size()-1
+      int randId =
+          (int)(p * (strategyName2DonorId[newDonorStrategy.getName()].size()));
+      // 初始化为int的极小值
+      int newPayoff = INT_MIN;
+      int idInStrategyName2DonorId = 0;
+      int lastPayoff;
       for (int donorId : strategyName2DonorId[newDonorStrategy.getName()]) {
-        sum += donors[donorId].getDeltaScore();
+        if (idInStrategyName2DonorId == randId) {
+          newPayoff = donors[donorId].getDeltaScore();
+          break;
+        }
+        lastPayoff = donors[donorId].getDeltaScore();
+        idInStrategyName2DonorId++;
+      }
+      if (newPayoff == INT_MIN) {
+        // 没有找到可能是因为p抽到1刚好randId越界一位，直接取newPayoff为
+        // set中的最后一个的payoff 即 lastPayoff
+        if (randId = strategyName2DonorId[newDonorStrategy.getName()].size()) {
+          newPayoff = lastPayoff;
+        }
+        throw "newPayoff is INT_MIN";
       }
 
-      // 判断 size() 防止除0
-      if (strategyName2DonorId[newDonorStrategy.getName()].size() == 0) {
-        throw "size is 0, will dive 0";
-      }
-      double avgDonorScore =
-          sum / strategyName2DonorId[newDonorStrategy.getName()].size();
       // 费米更新
-      // 抛出一个随机概率，如果大于费米概率就更新为新策略
+      // 抛出一个随机概率，如果小于费米概率就更新为新策略
       // TODO: 可以改为增量式的，由set自己维护自己的平均收益可以减少一层循环
       if (donors[i].getProbability() <
-          fermi(donors[i].getDeltaScore(), avgDonorScore, s)) {
+          fermi(donors[i].getDeltaScore(), newPayoff, s)) {
         // 记录转变
         donor2StrateChange[i] = make_pair(donors[i].getStrategy().getName(),
                                           newDonorStrategy.getName());
@@ -450,22 +471,32 @@ int main() {
       // 更新recipient策略
       Strategy newRecipientStrategy =
           recipients[i].getRandomOtherStrategy(recipientAlterStrategy);
-      // 从采用该策略的人中求平均值
-      sum = 0;
+      p = recipients[i].getProbability();
+      randId =
+          (int)(p * (strategyName2RecipientId[newRecipientStrategy.getName()]
+                         .size()));
+      // 初始化为int的极小值
+      newPayoff = INT_MIN;
+      int idInStrategyName2StrategyId = 0;
       for (int recipientId :
            strategyName2RecipientId[newRecipientStrategy.getName()]) {
-        sum += recipients[recipientId].getDeltaScore();
+        if (idInStrategyName2StrategyId == randId) {
+          newPayoff = recipients[recipientId].getDeltaScore();
+          break;
+        }
+        lastPayoff = recipients[recipientId].getDeltaScore();
+        idInStrategyName2StrategyId++;
+      }
+      if (newPayoff == INT_MIN) {
+        if (randId = strategyName2RecipientId[newRecipientStrategy.getName()]
+                         .size()) {
+          newPayoff = lastPayoff;
+        }
+        throw "newPayoff is INT_MIN";
       }
 
-      // 判断 size() 防止除0
-      if (strategyName2RecipientId[newRecipientStrategy.getName()].size() ==
-          0) {
-        throw "size is 0, will dive 0";
-      }
-      double avgRecipientScore =
-          sum / strategyName2RecipientId[newRecipientStrategy.getName()].size();
       if (recipients[i].getProbability() <
-          fermi(recipients[i].getDeltaScore(), avgRecipientScore, s)) {
+          fermi(recipients[i].getDeltaScore(), newPayoff, s)) {
         // 记录转变
         recipientId2StrateChange[i] =
             make_pair(recipients[i].getStrategy().getName(),
@@ -492,9 +523,10 @@ int main() {
                donors[i].getScore(), recipients[i].getScore());
   }
 
-  printStatistics(donors, recipients, donorStrategies, recipientStrategies, strategyName2DonorId, strategyName2RecipientId,
-                  population, stepNum, true);
-  // }
+  printStatistics(donors, recipients, donorStrategies, recipientStrategies,
+                  strategyName2DonorId, strategyName2RecipientId, population,
+                  stepNum, true);
+  }
 
   system_clock::time_point end = system_clock::now();
   cout << "\ntime: " << duration_cast<microseconds>(end - start).count() / 1e6
