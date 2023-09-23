@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 // #include <execution>
+// #include <tbb/task.h>
 
 #include "Action.hpp"
 #include "Norm.hpp"
@@ -68,15 +69,29 @@ void applyStrategyChange(
   }
 }
 
+/**
+ * @brief  统计每个策略对的人数同时可以生成log行:
+ * step, C-NR, C-SR, C-AR, C-UR, OC-NR, OC-SR, OC-AR, OC-UR, OD-NR, OD-SR,
+ * OD-AR, OD-UR, D-NR, D-SR, D-AR, D-UR, C, OC, OD, D, NR, SR, AR, UR
+ *
+ *
+ * @param donors
+ * @param recipients
+ * @param donorStrategies
+ * @param recipientStrategies
+ * @param strategyName2DonorId
+ * @param strategyName2RecipientId
+ * @param population
+ * @param step
+ * @param print
+ * @return string
+ */
 string printStatistics(vector<Player> donors, vector<Player> recipients,
                        vector<Strategy> donorStrategies,
-                       vector<Strategy> recipientStrategies, int population,
-                       int step, bool print) {
-  // 统计每个策略对的人数
-  //  0: C-NR   1: C-SR   2: C-AR    3: C-UR
-  //  4: OC-NR  5: OC-SR  6: OC-AR   7: OC-UR
-  //  8: OD-NR  9: OD-SR  10: OD-AR  11: OD-UR
-  //  12: D-NR 13: D-SR   14: D-AR   15: D-UR
+                       vector<Strategy> recipientStrategies,
+                       unordered_map<string, set<int>> strategyName2DonorId,
+                       unordered_map<string, set<int>> strategyName2RecipientId,
+                       int population, int step, bool print) {
   unordered_map<string, int> strategyPair2Num;
   string key;
   for (int i = 0; i < population; i++) {
@@ -95,12 +110,30 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
         fmt::print("{0}: {1}, ", key, strategyPair2Num[key]);
       }
     }
+    fmt::print("\n");
+    for (Strategy donorS : donorStrategies) {
+      key = donorS.getName();
+      fmt::print("{0}: {1}, ", key, strategyName2DonorId[key].size());
+    }
+    fmt::print("\n");
+    for (Strategy recipientS : recipientStrategies) {
+      key = recipientS.getName();
+      fmt::print("{0}: {1}, ", key, strategyName2RecipientId[key].size());
+    }
   } else {
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
         key = donorS.getName() + "-" + recipientS.getName();
         logLine += "," + to_string(strategyPair2Num[key]);
       }
+    }
+    for (Strategy donorS : donorStrategies) {
+      key = donorS.getName();
+      logLine += "," + to_string(strategyName2DonorId[key].size());
+    }
+    for (Strategy recipientS : recipientStrategies) {
+      key = recipientS.getName();
+      logLine += "," + to_string(strategyName2RecipientId[key].size());
     }
   }
   return logLine;
@@ -112,8 +145,8 @@ int main() {
 
   // 博弈参数
   int stepNum = 1000;
-  int population = 400;  // 人数，这里作为博弈对数，100表示100对博弈者
-  double s = 1;             // 费米函数参数
+  int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
+  double s = 1;          // 费米函数参数
 
   int b = 4;      // 公共参数
   int beta = 3;   // 公共参数
@@ -276,19 +309,26 @@ int main() {
   }
 
   printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-                  population, 0, true);
+                  strategyName2DonorId, strategyName2RecipientId, population, 0,
+                  true);
 
   // donor.setStrategy("OC");
   // recipient.setStrategy("NR");
   // recipient.updateVar(REPUTATION_STR, 0);
 
   // TODO: log对象
+  string logDir = "./log/" + normName + "/";
+  // 判断路径存不存在，如果不存在就新建
+  if (!filesystem::exists(logDir)) {
+    filesystem::create_directory(logDir);
+  }
+
   string logPath = "stepNum-" + to_string(stepNum) + "_population-" +
                    to_string(population) + "_s-" + to_string(s) + "_b-" +
                    to_string(b) + "_beta-" + to_string(beta) + "_c-" +
                    to_string(c) + "_gamma-" + to_string(gamma) + "_norm-" +
                    normName + ".csv";
-  auto out = fmt::output_file(logPath);
+  auto out = fmt::output_file(logDir+logPath);
   // 生成表头
   string line = "step";
   for (Strategy donorS : donorStrategies) {
@@ -296,10 +336,17 @@ int main() {
       line += "," + donorS.getName() + "-" + recipientS.getName();
     }
   }
+  for (Strategy donorS : donorStrategies) {
+    line += "," + donorS.getName();
+  }
+  for (Strategy recipientS : recipientStrategies) {
+    line += "," + recipientS.getName();
+  }
   out.print("{}\n", line);
 
-  string logLine = printStatistics(donors, recipients, donorStrategies,
-                                   recipientStrategies, population, 0, false);
+  string logLine = printStatistics(
+      donors, recipients, donorStrategies, recipientStrategies,
+      strategyName2DonorId, strategyName2RecipientId, population, 0, false);
   out.print("{}\n", logLine);
 
   // 1. 固定博弈者对交互 TODO: 不固定博弈者对轮流交互取平均
@@ -307,11 +354,10 @@ int main() {
     unordered_map<int, pair<string, string>> donor2StrateChange;
     unordered_map<int, pair<string, string>> recipientId2StrateChange;
 
-    // // for_each 并行
+    // for_each 并行
     // vector<int> ids(population);
     // std::for_each(std::execution::par, ids.begin(), ids.end(), [&](int i) {
-
-    for (int i = 0; i < population; i++) { // --------------------->>3
+    for (int i = 0; i < population; i++) {  // --------------------->>1
       // cout << endl << "-------------------- step " << step << endl;
       // 第一阶段 donors[i] 行动
       Action donorAction = donors[i].donate(
@@ -346,6 +392,10 @@ int main() {
       recipients[i].updateScore(recipientPayoff);
       // fmt::print("donors[i]:{0}, recipients[i]:{1}\n", donorPayoff,
       //            recipientPayoff);
+    }  // ----------<<1
+    // });  // 并行
+
+    for (int i = 0; i < population; i++) {  // --------------------->>2
       // 第五阶段 更新双方策略
       // 更新donor策略
       vector<Strategy> donorAlterStrategy;
@@ -363,7 +413,7 @@ int main() {
       // 从采用该策略的人中求平均值
       double sum = 0;
       for (int donorId : strategyName2DonorId[newDonorStrategy.getName()]) {
-        sum += donors[donorId].getScore();
+        sum += donors[donorId].getDeltaScore();
       }
 
       // 判断 size() 防止除0
@@ -372,12 +422,11 @@ int main() {
       }
       double avgDonorScore =
           sum / strategyName2DonorId[newDonorStrategy.getName()].size();
-
       // 费米更新
       // 抛出一个随机概率，如果大于费米概率就更新为新策略
       // TODO: 可以改为增量式的，由set自己维护自己的平均收益可以减少一层循环
       if (donors[i].getProbability() <
-          fermi(donors[i].getScore(), avgDonorScore, s)) {
+          fermi(donors[i].getDeltaScore(), avgDonorScore, s)) {
         // 记录转变
         donor2StrateChange[i] = make_pair(donors[i].getStrategy().getName(),
                                           newDonorStrategy.getName());
@@ -405,13 +454,18 @@ int main() {
       sum = 0;
       for (int recipientId :
            strategyName2RecipientId[newRecipientStrategy.getName()]) {
-        sum += recipients[recipientId].getScore();
+        sum += recipients[recipientId].getDeltaScore();
       }
 
+      // 判断 size() 防止除0
+      if (strategyName2RecipientId[newRecipientStrategy.getName()].size() ==
+          0) {
+        throw "size is 0, will dive 0";
+      }
       double avgRecipientScore =
           sum / strategyName2RecipientId[newRecipientStrategy.getName()].size();
       if (recipients[i].getProbability() <
-          fermi(recipients[i].getScore(), avgRecipientScore, s)) {
+          fermi(recipients[i].getDeltaScore(), avgRecipientScore, s)) {
         // 记录转变
         recipientId2StrateChange[i] =
             make_pair(recipients[i].getStrategy().getName(),
@@ -419,9 +473,8 @@ int main() {
 
         recipients[i].setStrategy(newRecipientStrategy);
       }
-    } // ----------<<3
 
-    // }); // 并行
+    }  // --------------<<2
 
     // 第六阶段，本轮末尾应用所有转变
     applyStrategyChange(strategyName2DonorId, donor2StrateChange);
@@ -429,8 +482,9 @@ int main() {
 
     // 生成log
     out.print("{}\n", printStatistics(donors, recipients, donorStrategies,
-                                      recipientStrategies, population, step + 1,
-                                      false));
+                                      recipientStrategies, strategyName2DonorId,
+                                      strategyName2RecipientId, population,
+                                      step + 1, false));
   }
 
   for (int i = 0; i < population; i++) {
@@ -438,12 +492,12 @@ int main() {
                donors[i].getScore(), recipients[i].getScore());
   }
 
-  printStatistics(donors, recipients, donorStrategies, recipientStrategies,
+  printStatistics(donors, recipients, donorStrategies, recipientStrategies, strategyName2DonorId, strategyName2RecipientId,
                   population, stepNum, true);
   // }
 
   system_clock::time_point end = system_clock::now();
-  cout << "time: " << duration_cast<microseconds>(end - start).count() / 1e6
+  cout << "\ntime: " << duration_cast<microseconds>(end - start).count() / 1e6
        << "s" << endl;
   return 0;
 }

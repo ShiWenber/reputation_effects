@@ -36,6 +36,8 @@ class Player {
 
   std::vector<Strategy> strategies;
 
+  double deltaScore; //< 最近一次upScore时产生的收益变化
+
   std::map<std::string, double> vars;
 
  public:
@@ -52,7 +54,7 @@ class Player {
   Action reward(std::string donorActionName);
 
   /**根据查询到的收益的delta值，更新分数*/
-  void updateScore(double delta) { this->score += delta; };
+  void updateScore(double delta) { this->deltaScore=delta; this->score += delta; };
 
   std::string getName() const { return this->name; }
   void setName(const std::string &name) { this->name = name; }
@@ -154,6 +156,8 @@ class Player {
   Strategy getRandomOtherStrategy(std::vector<Strategy> &alterStrategy);
   // 抛出一个0-1的概率
   double getProbability();
+
+  double getDeltaScore() const { return this->deltaScore; }
 };
 
 #endif  // !PLAYER_HPP

@@ -221,6 +221,10 @@ void Player::loadStrategy(const std::string& strategyPath) {
  */
 // TODO: --
 Strategy Player::getRandomOtherStrategy(std::vector<Strategy> &alterStrategy) {
+  // 判断是否有可选的策略
+  if (alterStrategy.size() <= 0) {
+    throw "no alter strategy";
+  }
   std::uniform_int_distribution<int> randomDis(0, alterStrategy.size() - 1);
   int randInt = randomDis(this->gen);
   return alterStrategy[randInt];
