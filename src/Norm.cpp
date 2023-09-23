@@ -70,6 +70,7 @@ double Norm::getReputation(Action donorAction, Action recipientAction) {
     // 判断this->normFunc中是否有key
     if (this->normFunc.find(key) == this->normFunc.end()) {
       // 如果没有，则异常，并抛出key
+      std::cerr << "normFunc not found key: " << key << std::endl;
       throw "normFunc not found key: " + key;
     }
   }

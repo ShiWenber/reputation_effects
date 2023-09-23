@@ -66,9 +66,10 @@ Player::~Player() {}
  * 可以通过设置变长参数表来实现输入的数量不固定，当前采用的是固定的两个输入:
  * this->strategy, recipientReputation
  * @param recipientReputation
+ * @param mu 动作突变率
  * @return Action
  */
-Action Player::donate(std::string recipientReputation) {
+Action Player::donate(std::string recipientReputation, double mu) {
   // 从形参构建key
   std::string key = this->strategy.getName();
   key += "!" + recipientReputation;
@@ -76,12 +77,24 @@ Action Player::donate(std::string recipientReputation) {
   // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
   Action resAction = this->strategyFunc[key];
   if (resAction.getName() == "") {
+    std::cerr << "key: " << key << " not found" << std::endl;
     throw "action not found";
+  }
+
+  // mu概率Action突变
+  if (this->getProbability() < mu) {
+    std::vector<Action> alterActions;
+    for (Action action : this->actions) {
+      if (action.getName() != resAction.getName()) {
+        alterActions.push_back(action);
+      }
+    }
+    resAction = this->getRandomAction(alterActions);
   }
   return resAction;
 }
 
-Action Player::reward(std::string donorActionName) {
+Action Player::reward(std::string donorActionName, double mu) {
   // 从形参构建key
   std::string key = this->strategy.getName();
   key += "!" + donorActionName;
@@ -89,8 +102,21 @@ Action Player::reward(std::string donorActionName) {
   // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
   Action resAction = this->strategyFunc[key];
   if (resAction.getName() == "") {
+    std::cerr << "key: " << key << " not found" << std::endl;
     throw "action not found";
   }
+
+  // mu概率Action突变
+  if (this->getProbability() < mu) {
+    std::vector<Action> alterActions;
+    for (Action action : this->actions) {
+      if (action.getName() != resAction.getName()) {
+        alterActions.push_back(action);
+      }
+    }
+    resAction = this->getRandomAction(alterActions);
+  }
+
   return resAction;
 }
 
@@ -100,12 +126,14 @@ void Player::setActionPossibility(
   // 判断actionPossibility之和是否为1
   for (double p : actionPossibility) {
     if (p < 0) {
+      std::cerr << "actionPossibility must be positive" << std::endl;
       throw "actionPossibility must be positive";
     }
     sum += p;
   }
 
   if (sum != 1) {
+    std::cerr  << "actionPossibility must sum to 1" << std::endl;
     throw "actionPossibility must sum to 1";
   }
 
@@ -130,6 +158,7 @@ void Player::setStrategy(const std::string& strategyName) {
     }
   }
   if (existed != true) {
+    std::cerr << "not exist: " << strategyName << std::endl;
     throw "not exist: " + strategyName;
   }
 }
@@ -202,6 +231,8 @@ void Player::loadStrategy(const std::string& strategyPath) {
             }
           }
           if (!finded) {
+            std::cerr << "action not found: "
+                 << this->strategyTables[strategyName][row][col] << std::endl;
             throw "action not found";
           }
         } else {
@@ -213,16 +244,16 @@ void Player::loadStrategy(const std::string& strategyPath) {
   }
 }
 
-/**
- * @brief  使用自带的随机数生成器生成一个随机的策略(等概率的)
- * 
- * @param alterStrategy 
- * @return Strategy 
+/** @brief  使用自带的随机数生成器生成一个随机的策略(等概率的)
+ *
+ * @param alterStra egy
+ * @return Strategy
  */
 // TODO: --
-Strategy Player::getRandomOtherStrategy(std::vector<Strategy> &alterStrategy) {
+Strategy Player::getRandomOtherStrategy(std::vector<Strategy>& alterStrategy) {
   // 判断是否有可选的策略
   if (alterStrategy.size() <= 0) {
+    std::cerr << "no alter strategy" << std::endl;
     throw "no alter strategy";
   }
   std::uniform_int_distribution<int> randomDis(0, alterStrategy.size() - 1);
@@ -236,3 +267,13 @@ double Player::getProbability() {
   return randDouble;
 }
 
+Action Player::getRandomAction(std::vector<Action>& alterActions) {
+  // 判断是否有可选的策略
+  if (alterActions.size() <= 0) {
+    std::cerr << "no alter action" << std::endl;
+    throw "no alter action";
+  }
+  std::uniform_int_distribution<int> randomDis(0, alterActions.size() - 1);
+  int randInt = randomDis(this->gen);
+  return alterActions[randInt];
+}

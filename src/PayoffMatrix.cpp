@@ -92,12 +92,16 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
           payoffList.push_back(payoffForOnePlayer_str);
         }
         if (temp_playerNum != playerNum) {
+          std::cerr << "not every cell has the same number of players's payoff"
+               << std::endl;
           throw "not every cell has the same number of players's payoff";
         }
         payoffMatrixRow.push_back(payoffList);
       }
       if (temp_colNum != colNum) {
         // 并不是每行都有相同的元素数量
+        std::cerr << "not every row has the same number of elements"
+             << std::endl;
         throw "not every row has the same number of elements";
       }
       this->payoffMatrixStr.push_back(payoffMatrixRow);
@@ -156,6 +160,7 @@ std::vector<double> PayoffMatrix::getPayoff(Strategy strategyA, Strategy strateg
   if (idA < this->strategys.size() && idB < this->strategys.size()) {
     return this->payoffMatrix[idA][idB];
   } else {
+    std::cerr << "strategy id not found" << std::endl;
     throw "strategy id not found";
   }
 }

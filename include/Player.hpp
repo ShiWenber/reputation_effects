@@ -36,7 +36,7 @@ class Player {
 
   std::vector<Strategy> strategies;
 
-  double deltaScore; //< 最近一次upScore时产生的收益变化
+  double deltaScore;  //< 最近一次upScore时产生的收益变化
 
   std::map<std::string, double> vars;
 
@@ -49,12 +49,17 @@ class Player {
   Action play();
 
   /** 根据输入返回一个动作，需要strategyTables */
-  Action donate(std::string recipientReputation);
+  Action donate(std::string recipientReputation, double mu = 0);
 
-  Action reward(std::string donorActionName);
+  Action reward(std::string donorActionName, double mu = 0);
 
   /**根据查询到的收益的delta值，更新分数*/
-  void updateScore(double delta) { this->deltaScore=delta; this->score += delta; };
+  void updateScore(double delta) {
+    this->deltaScore += delta;
+    this->score += delta;
+  };
+
+  void clearDeltaScore() { this->deltaScore = 0; }
 
   std::string getName() const { return this->name; }
   void setName(const std::string &name) { this->name = name; }
@@ -102,6 +107,7 @@ class Player {
   void setVars(const std::map<std::string, double> &vars) { this->vars = vars; }
   void addVar(const std::string &varName, double varValue) {
     if (existVar(varName)) {
+      std::cerr << "exist var: " << varName << std::endl;
       throw "exist var: " + varName;
     }
     this->vars[varName] = varValue;
@@ -110,18 +116,21 @@ class Player {
   void clearVars() { this->vars.clear(); }
   void updateVar(const std::string &varName, double varValue) {
     if (!existVar(varName)) {
+      std::cerr << "not exist var: " << varName << std::endl;
       throw "not exist var: " + varName;
     }
     this->vars[varName] = varValue;
   }
   void updateVar(const std::string &varName, const std::string &varValue) {
     if (!existVar(varName)) {
+      std::cerr << "not exist var: " << varName << std::endl;
       throw "not exist var: " + varName;
     }
     this->vars[varName] = std::stod(varValue);
   }
   double getVarValue(const std::string &varName) const {
     if (!existVar(varName)) {
+      std::cerr << "not exist var: " << varName << std::endl;
       throw "not exist var: " + varName;
     }
     return this->vars.at(varName);
@@ -152,8 +161,11 @@ class Player {
     this->strategies = strategies;
   }
 
-  // 随机性行为，基于对象内部的随机数生成器，由于使用了 随机数生成器，随机行为不能用const修饰
+  // 随机性行为，基于对象内部的随机数生成器，由于使用了
+  // 随机数生成器，随机行为不能用const修饰
   Strategy getRandomOtherStrategy(std::vector<Strategy> &alterStrategy);
+  Action getRandomAction(std::vector<Action> &alterAction); 
+
   // 抛出一个0-1的概率
   double getProbability();
 

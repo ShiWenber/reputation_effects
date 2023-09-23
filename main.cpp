@@ -23,6 +23,9 @@
 // #include <execution>
 // #include <tbb/task.h>
 
+#include <tbb/task_arena.h>
+#include <tbb/parallel_for.h>
+
 #include "Action.hpp"
 #include "Norm.hpp"
 #include "PayoffMatrix.hpp"
@@ -93,6 +96,7 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
                        unordered_map<string, set<int>> strategyName2DonorId,
                        unordered_map<string, set<int>> strategyName2RecipientId,
                        int population, int step, bool print) {
+  double population_double = (double)population;
   unordered_map<string, int> strategyPair2Num;
   string key;
   for (int i = 0; i < population; i++) {
@@ -108,61 +112,61 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
         key = donorS.getName() + "-" + recipientS.getName();
-        fmt::print("{0}: {1}, ", key, strategyPair2Num[key]);
+        fmt::print("{0}: {1}, ", key, strategyPair2Num[key] / population_double);
       }
     }
     fmt::print("\n");
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
-      fmt::print("{0}: {1}, ", key, strategyName2DonorId[key].size());
+      fmt::print("{0}: {1}, ", key, strategyName2DonorId[key].size() / population_double);
     }
     fmt::print("\n");
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
-      fmt::print("{0}: {1}, ", key, strategyName2RecipientId[key].size());
+      fmt::print("{0}: {1}, ", key, strategyName2RecipientId[key].size() / population_double);
     }
   } else {
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
         key = donorS.getName() + "-" + recipientS.getName();
-        logLine += "," + to_string(strategyPair2Num[key]);
+        logLine += "," + to_string(strategyPair2Num[key] / population_double);
       }
     }
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
-      logLine += "," + to_string(strategyName2DonorId[key].size());
+      logLine += "," + to_string(strategyName2DonorId[key].size() / population_double);
     }
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
-      logLine += "," + to_string(strategyName2RecipientId[key].size());
+      logLine += "," + to_string(strategyName2RecipientId[key].size() / population_double);
     }
   }
   return logLine;
 }
 
-int main() {
-  // 记录运行时间
-  system_clock::time_point start = chrono::system_clock::now();
-
-  // 博弈参数
-  int stepNum = 1000;
-  int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
-  double s = 1;          // 费米函数参数
-
-  int b = 4;      // 公共参数
-  int beta = 3;   // 公共参数
-  int c = 1;      // 公共参数
-  int gamma = 1;  // 公共参数
-  int normId = 10;
-
-
-  for (int normId = 1; normId < 16;  normId++) {
-
+/**
+ * @brief 须输入参数案例
+ *   // 博弈参数
+ * int stepNum = 1000;
+ * int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
+ * double s = 1;          // 费米函数参数
+ *
+ * int b = 4;      // 公共参数
+ * int beta = 3;   // 公共参数
+ * int c = 1;      // 公共参数
+ * int gamma = 1;  // 公共参数
+ * int mu = 0.05;  // 动作突变率
+ * int normId = 10;
+ *
+ *
+ *
+ * @return int
+ */
+void func(int stepNum, int population, double s, int b, int beta, int c,
+         int gamma, double mu, int normId, int updateStepNum) {
   string normName = "norm" + to_string(normId);
 
   cout << "---" << endl;
-
-
 
   // 加载payoffMatrix
   cout << "---------->>" << endl;
@@ -330,12 +334,13 @@ int main() {
     filesystem::create_directory(logDir);
   }
 
-  string logPath = "stepNum-" + to_string(stepNum) + "_population-" +
+  string logName = "stepNum-" + to_string(stepNum) + "_population-" +
                    to_string(population) + "_s-" + to_string(s) + "_b-" +
                    to_string(b) + "_beta-" + to_string(beta) + "_c-" +
-                   to_string(c) + "_gamma-" + to_string(gamma) + "_norm-" +
-                   normName + ".csv";
-  auto out = fmt::output_file(logDir + logPath);
+                   to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
+                   to_string(mu) + "_norm-" + normName + "_uStepN-" + to_string(updateStepNum)
+                   + ".csv";
+  auto out = fmt::output_file(logDir + logName);
   // 生成表头
   string line = "step";
   for (Strategy donorS : donorStrategies) {
@@ -368,11 +373,11 @@ int main() {
       // cout << endl << "-------------------- step " << step << endl;
       // 第一阶段 donors[i] 行动
       Action donorAction = donors[i].donate(
-          std::to_string((int)recipients[i].getVarValue(REPUTATION_STR)));
+          std::to_string((int)recipients[i].getVarValue(REPUTATION_STR)), mu);
       // fmt::print("donorStrategy:{0}, donorAction: {1}\n",
       //            donors[i].getStrategy().getName(), donorAction.getName());
       // 第二阶段 recipients[i] 行动，记录本轮声望
-      Action recipientAction = recipients[i].reward(donorAction.getName());
+      Action recipientAction = recipients[i].reward(donorAction.getName(), mu);
       double currentReputation = recipients[i].getVarValue(REPUTATION_STR);
       // fmt::print("recipientStrategy:{0}, recipientAction: {1}\n",
       //            recipients[i].getStrategy().getName(),
@@ -402,6 +407,12 @@ int main() {
     }  // ----------<<1
     // });  // 并行
 
+    // 未到更新轮数或者step为0，跳过更新策略
+    if ( step == 0 || step % updateStepNum != 0 ) {
+      continue;
+    }
+
+    // 更新策略
     for (int i = 0; i < population; i++) {  // --------------------->>2
       // 第五阶段 更新双方策略
       // 更新donor策略
@@ -440,6 +451,7 @@ int main() {
         if (randId = strategyName2DonorId[newDonorStrategy.getName()].size()) {
           newPayoff = lastPayoff;
         }
+        cerr << "newPayoff is INT_MIN" << endl;
         throw "newPayoff is INT_MIN";
       }
 
@@ -492,6 +504,7 @@ int main() {
                          .size()) {
           newPayoff = lastPayoff;
         }
+        cout << "newPayoff is INT_MIN" << endl;
         throw "newPayoff is INT_MIN";
       }
 
@@ -504,7 +517,9 @@ int main() {
 
         recipients[i].setStrategy(newRecipientStrategy);
       }
-
+      // 更新后清空deltaScore
+      donors[i].clearDeltaScore();
+      recipients[i].clearDeltaScore();
     }  // --------------<<2
 
     // 第六阶段，本轮末尾应用所有转变
@@ -518,15 +533,46 @@ int main() {
                                       step + 1, false));
   }
 
-  for (int i = 0; i < population; i++) {
-    fmt::print("\nscore: donors[{0}]: {1}, recipients[{0}]: {2}\n", i,
-               donors[i].getScore(), recipients[i].getScore());
-  }
+  // for (int i = 0; i < population; i++) {
+  //   fmt::print("\nscore: donors[{0}]: {1}, recipients[{0}]: {2}\n", i,
+  //              donors[i].getScore(), recipients[i].getScore());
+  // }
 
   printStatistics(donors, recipients, donorStrategies, recipientStrategies,
                   strategyName2DonorId, strategyName2RecipientId, population,
                   stepNum, true);
-  }
+}
+
+int main() {
+  // 记录运行时间
+  system_clock::time_point start = chrono::system_clock::now();
+  tbb::task_arena arena(16); // 创建一个并行度为4的arena 
+
+  // 博弈参数
+  int stepNum = 10000;
+  int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
+  double s = 1;          // 费米函数参数
+
+  int b = 4;      // 公共参数
+  int beta = 3;   // 公共参数
+  int c = 1;      // 公共参数
+  int gamma = 1;  // 公共参数
+  int mu = 0.05;  // 动作突变率
+  int normId = 10;
+  int updateStepNum = 10; // 表示每隔多少步更新一次策略
+  
+  arena.execute([&](){
+    for (int normId = 0; normId < 16; normId++) {
+      func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+    }
+    // tbb::parallel_for(0, 16, [&](int normId){
+    //   func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+    // });
+  });
+
+  // for (int normId = 0; normId < 16; normId++) {
+  //   func(stepNum, population, s, b, beta, c, gamma, mu, normId);
+  // }
 
   system_clock::time_point end = system_clock::now();
   cout << "\ntime: " << duration_cast<microseconds>(end - start).count() / 1e6
