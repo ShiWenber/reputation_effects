@@ -168,6 +168,7 @@ class Player {
 
   // 抛出一个0-1的概率
   double getProbability();
+  int getRandomInt(int start, int end);
 
   double getDeltaScore() const { return this->deltaScore; }
 };

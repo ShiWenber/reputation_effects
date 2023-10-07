@@ -264,3 +264,4 @@ pyrightconfig.json
 social-rewarding/
 log/
 *.tgz
+*.tar.gz

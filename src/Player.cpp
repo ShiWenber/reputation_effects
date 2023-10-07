@@ -133,7 +133,7 @@ void Player::setActionPossibility(
   }
 
   if (sum != 1) {
-    std::cerr  << "actionPossibility must sum to 1" << std::endl;
+    std::cerr << "actionPossibility must sum to 1" << std::endl;
     throw "actionPossibility must sum to 1";
   }
 
@@ -232,7 +232,8 @@ void Player::loadStrategy(const std::string& strategyPath) {
           }
           if (!finded) {
             std::cerr << "action not found: "
-                 << this->strategyTables[strategyName][row][col] << std::endl;
+                      << this->strategyTables[strategyName][row][col]
+                      << std::endl;
             throw "action not found";
           }
         } else {
@@ -265,6 +266,18 @@ double Player::getProbability() {
   std::uniform_real_distribution<double> randomDis(0, 1);
   double randDouble = randomDis(this->gen);
   return randDouble;
+}
+
+/**
+ * @brief 输出随机整数
+ * 
+ * @param input 
+ * @return int 
+ */
+int Player::getRandomInt(int start, int end) {
+  std::uniform_int_distribution<int> randomInt(start, end); //< 从 [start, end]中取随机整数
+  int randInt = randomInt(this->gen);
+  return randInt;
 }
 
 Action Player::getRandomAction(std::vector<Action>& alterActions) {

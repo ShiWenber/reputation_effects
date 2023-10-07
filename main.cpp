@@ -23,8 +23,8 @@
 // #include <execution>
 // #include <tbb/task.h>
 
-#include <tbb/task_arena.h>
 #include <tbb/parallel_for.h>
+#include <tbb/task_arena.h>
 
 #include "Action.hpp"
 #include "Norm.hpp"
@@ -112,18 +112,21 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
         key = donorS.getName() + "-" + recipientS.getName();
-        fmt::print("{0}: {1}, ", key, strategyPair2Num[key] / population_double);
+        fmt::print("{0}: {1}, ", key,
+                   strategyPair2Num[key] / population_double);
       }
     }
     fmt::print("\n");
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
-      fmt::print("{0}: {1}, ", key, strategyName2DonorId[key].size() / population_double);
+      fmt::print("{0}: {1}, ", key,
+                 strategyName2DonorId[key].size() / population_double);
     }
     fmt::print("\n");
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
-      fmt::print("{0}: {1}, ", key, strategyName2RecipientId[key].size() / population_double);
+      fmt::print("{0}: {1}, ", key,
+                 strategyName2RecipientId[key].size() / population_double);
     }
   } else {
     for (Strategy donorS : donorStrategies) {
@@ -134,11 +137,13 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
     }
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
-      logLine += "," + to_string(strategyName2DonorId[key].size() / population_double);
+      logLine +=
+          "," + to_string(strategyName2DonorId[key].size() / population_double);
     }
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
-      logLine += "," + to_string(strategyName2RecipientId[key].size() / population_double);
+      logLine += "," + to_string(strategyName2RecipientId[key].size() /
+                                 population_double);
     }
   }
   return logLine;
@@ -163,7 +168,7 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
  * @return int
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
-         int gamma, double mu, int normId, int updateStepNum) {
+          int gamma, double mu, int normId, int updateStepNum) {
   string normName = "norm" + to_string(normId);
 
   cout << "---" << endl;
@@ -338,8 +343,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                    to_string(population) + "_s-" + to_string(s) + "_b-" +
                    to_string(b) + "_beta-" + to_string(beta) + "_c-" +
                    to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
-                   to_string(mu) + "_norm-" + normName + "_uStepN-" + to_string(updateStepNum)
-                   + ".csv";
+                   to_string(mu) + "_norm-" + normName + "_uStepN-" +
+                   to_string(updateStepNum) + ".csv";
   auto out = fmt::output_file(logDir + logName);
   // 生成表头
   string line = "step";
@@ -370,6 +375,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     // vector<int> ids(population);
     // std::for_each(std::execution::par, ids.begin(), ids.end(), [&](int i) {
     for (int i = 0; i < population; i++) {  // --------------------->>1
+
+      // 判断recipient的策略是否存在
+
       // cout << endl << "-------------------- step " << step << endl;
       // 第一阶段 donors[i] 行动
       Action donorAction = donors[i].donate(
@@ -408,7 +416,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     // });  // 并行
 
     // 未到更新轮数或者step为0，跳过更新策略
-    if ( step == 0 || step % updateStepNum != 0 ) {
+    if (step == 0 || step % updateStepNum != 0) {
       continue;
     }
 
@@ -416,41 +424,19 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     for (int i = 0; i < population; i++) {  // --------------------->>2
       // 第五阶段 更新双方策略
       // 更新donor策略
-      vector<Strategy> donorAlterStrategy;
-      // 设置备选策略
-      for (int j = 0; j < donorStrategies.size(); j++) {
-        // 排除当前策略和set.size()为0的策略
-        if (donorStrategies[j].getName() != donors[i].getStrategy().getName() &&
-            strategyName2DonorId[donorStrategies[j].getName()].size() != 0) {
-          donorAlterStrategy.push_back(donorStrategies[j]);
-        }
-      }
 
-      Strategy newDonorStrategy =
-          donors[i].getRandomOtherStrategy(donorAlterStrategy);
-      // 随机抽取一个采用该策略的人，用其该轮收益进行费米更新
-      double p = donors[i].getProbability();
-      // 由于int的强制转换是向下取整，所以这里的randId可能会取不到最后一个id，所以不用size()-1
-      int randId =
-          (int)(p * (strategyName2DonorId[newDonorStrategy.getName()].size()));
+      // 抽取一个种群中的其他人，将其策略更新
+      // 如果抽到自己就重新抽取
+      int randId = 0;
+      do {
+        randId = donors[i].getRandomInt(0, population - 1);
+      } while (randId == i);
+
       // 初始化为int的极小值
       int newPayoff = INT_MIN;
-      int idInStrategyName2DonorId = 0;
-      int lastPayoff;
-      for (int donorId : strategyName2DonorId[newDonorStrategy.getName()]) {
-        if (idInStrategyName2DonorId == randId) {
-          newPayoff = donors[donorId].getDeltaScore();
-          break;
-        }
-        lastPayoff = donors[donorId].getDeltaScore();
-        idInStrategyName2DonorId++;
-      }
+      newPayoff = donors[randId].getDeltaScore();
+
       if (newPayoff == INT_MIN) {
-        // 没有找到可能是因为p抽到1刚好randId越界一位，直接取newPayoff为
-        // set中的最后一个的payoff 即 lastPayoff
-        if (randId = strategyName2DonorId[newDonorStrategy.getName()].size()) {
-          newPayoff = lastPayoff;
-        }
         cerr << "newPayoff is INT_MIN" << endl;
         throw "newPayoff is INT_MIN";
       }
@@ -461,49 +447,24 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       if (donors[i].getProbability() <
           fermi(donors[i].getDeltaScore(), newPayoff, s)) {
         // 记录转变
-        donor2StrateChange[i] = make_pair(donors[i].getStrategy().getName(),
-                                          newDonorStrategy.getName());
+        donor2StrateChange[i] =
+            make_pair(donors[i].getStrategy().getName(),
+                      donors[randId].getStrategy().getName());
 
-        donors[i].setStrategy(newDonorStrategy);
-      }
+        donors[i].setStrategy(donors[randId].getStrategy());
 
-      // 设置备选策略
-      vector<Strategy> recipientAlterStrategy;
-      // 设置备选策略
-      for (int j = 0; j < recipientStrategies.size(); j++) {
-        // 排除当前策略和set.size()为0的策略
-        if (recipientStrategies[j].getName() !=
-                recipients[i].getStrategy().getName() &&
-            strategyName2RecipientId[recipientStrategies[j].getName()].size() !=
-                0) {
-          recipientAlterStrategy.push_back(recipientStrategies[j]);
-        }
       }
 
       // 更新recipient策略
-      Strategy newRecipientStrategy =
-          recipients[i].getRandomOtherStrategy(recipientAlterStrategy);
-      p = recipients[i].getProbability();
-      randId =
-          (int)(p * (strategyName2RecipientId[newRecipientStrategy.getName()]
-                         .size()));
+      do {
+        randId = recipients[i].getRandomInt(0, population - 1);
+      } while (randId == i);
+
       // 初始化为int的极小值
       newPayoff = INT_MIN;
-      int idInStrategyName2StrategyId = 0;
-      for (int recipientId :
-           strategyName2RecipientId[newRecipientStrategy.getName()]) {
-        if (idInStrategyName2StrategyId == randId) {
-          newPayoff = recipients[recipientId].getDeltaScore();
-          break;
-        }
-        lastPayoff = recipients[recipientId].getDeltaScore();
-        idInStrategyName2StrategyId++;
-      }
+      newPayoff = recipients[randId].getDeltaScore();
+
       if (newPayoff == INT_MIN) {
-        if (randId = strategyName2RecipientId[newRecipientStrategy.getName()]
-                         .size()) {
-          newPayoff = lastPayoff;
-        }
         cout << "newPayoff is INT_MIN" << endl;
         throw "newPayoff is INT_MIN";
       }
@@ -513,9 +474,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
         // 记录转变
         recipientId2StrateChange[i] =
             make_pair(recipients[i].getStrategy().getName(),
-                      newRecipientStrategy.getName());
+                      recipients[randId].getStrategy().getName());
+        recipients[i].setStrategy(recipients[randId].getStrategy());
 
-        recipients[i].setStrategy(newRecipientStrategy);
       }
       // 更新后清空deltaScore
       donors[i].clearDeltaScore();
@@ -546,10 +507,10 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 int main() {
   // 记录运行时间
   system_clock::time_point start = chrono::system_clock::now();
-  tbb::task_arena arena(16); // 创建一个并行度为4的arena 
+  tbb::task_arena arena(16);  // 创建一个并行度为4的arena
 
   // 博弈参数
-  int stepNum = 10000;
+  int stepNum = 2000;
   int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
   double s = 1;          // 费米函数参数
 
@@ -559,14 +520,20 @@ int main() {
   int gamma = 1;  // 公共参数
   int mu = 0.05;  // 动作突变率
   int normId = 10;
-  int updateStepNum = 10; // 表示每隔多少步更新一次策略
-  
-  arena.execute([&](){
+  int updateStepNum = 1;  // 表示每隔多少步更新一次策略
+
+  // 调试使用
+  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+
+  // 多线程加速
+  arena.execute([&]() {
     for (int normId = 0; normId < 16; normId++) {
-      func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+      func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+           updateStepNum);
     }
     // tbb::parallel_for(0, 16, [&](int normId){
-    //   func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+    //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+    //   updateStepNum);
     // });
   });
 
