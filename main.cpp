@@ -26,6 +26,9 @@
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
 
+#include<indicators/cursor_control.hpp>
+#include<indicators/progress_bar.hpp>
+
 #include "Action.hpp"
 #include "Norm.hpp"
 #include "PayoffMatrix.hpp"
@@ -169,6 +172,27 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
           int gamma, double mu, int normId, int updateStepNum) {
+    using namespace indicators;
+
+  // Hide cursor
+  show_console_cursor(false);
+
+  indicators::ProgressBar bar{
+    option::BarWidth{50},
+    option::Start{" ["},
+    option::Fill{"*"},
+    option::Lead{"*"},
+    option::Remainder{"-"},
+    option::End{"]"},
+    option::PrefixText{"Progress: "},
+    // option::ForegroundColor{Color::yellow},
+    option::ShowElapsedTime{true},
+    option::ShowRemainingTime{true},
+    option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
+  };
+
+
+
   string normName = "norm" + to_string(normId);
 
   cout << "---" << endl;
@@ -319,7 +343,10 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     donors.push_back(temp_donor);
 
     temp_recipient.setStrategy(recipientStrategies[dis_rec(gen_rec)]);
-    temp_recipient.updateVar(REPUTATION_STR, dis_reputation(gen_reputation));
+    // temp_recipient.updateVar(REPUTATION_STR, dis_reputation(gen_reputation));
+    // 固定声誉为1
+    temp_recipient.updateVar(REPUTATION_STR, 1);
+
     strategyName2RecipientId[temp_recipient.getStrategy().getName()].insert(i);
     recipients.push_back(temp_recipient);
   }
@@ -368,6 +395,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
   // 1. 固定博弈者对交互 TODO: 不固定博弈者对轮流交互取平均
   for (int step = 0; step < stepNum; step++) {
+    bar.set_progress((double)step / stepNum * 100);
+
     unordered_map<int, pair<string, string>> donor2StrateChange;
     unordered_map<int, pair<string, string>> recipientId2StrateChange;
 
@@ -502,6 +531,10 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   printStatistics(donors, recipients, donorStrategies, recipientStrategies,
                   strategyName2DonorId, strategyName2RecipientId, population,
                   stepNum, true);
+
+  // Show cursor
+  show_console_cursor(true);
+
 }
 
 int main() {
@@ -510,32 +543,39 @@ int main() {
   tbb::task_arena arena(16);  // 创建一个并行度为4的arena
 
   // 博弈参数
-  int stepNum = 2000;
-  int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
+  int stepNum = 3000;
+  int population = 400;  // 人数，这里作为博弈对数，100表示100对博弈者
   double s = 1;          // 费米函数参数
 
   int b = 4;      // 公共参数
   int beta = 3;   // 公共参数
   int c = 1;      // 公共参数
   int gamma = 1;  // 公共参数
-  int mu = 0.05;  // 动作突变率
+  double mu = 0.05;  // 动作突变率
   int normId = 10;
   int updateStepNum = 1;  // 表示每隔多少步更新一次策略
 
   // 调试使用
-  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+  func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
 
   // 多线程加速
-  arena.execute([&]() {
-    for (int normId = 0; normId < 16; normId++) {
-      func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-           updateStepNum);
-    }
-    // tbb::parallel_for(0, 16, [&](int normId){
-    //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-    //   updateStepNum);
-    // });
-  });
+  // arena.execute([&]() {
+  //   // for (int normId = 0; normId < 16; normId++) {
+  //   //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+  //   //        updateStepNum);
+  //   // }
+
+  //   for (int stepNum = 2000;  stepNum < 2050; stepNum++) {
+  //     func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+  //          updateStepNum);
+  //   }
+
+
+  //   // tbb::parallel_for(0, 16, [&](int normId){
+  //   //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+  //   //   updateStepNum);
+  //   // });
+  // });
 
   // for (int normId = 0; normId < 16; normId++) {
   //   func(stepNum, population, s, b, beta, c, gamma, mu, normId);
