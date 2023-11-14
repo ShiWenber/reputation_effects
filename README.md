@@ -228,3 +228,8 @@ for (int i = 0; i < population; i++) {
 ```
 
 当程序因为异常停止，如果输出异常信息为 no alter strategy 可能表示所有的博弈者都采用了同一策略，已经没有策略可以转变了
+
+
+## requirements
+
+- C++17

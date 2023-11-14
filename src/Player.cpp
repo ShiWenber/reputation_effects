@@ -5,6 +5,7 @@
 #include <iostream>
 #include <random>
 #include <sstream>
+#include <cassert>
 
 // 为静态成员初始化一个空的map
 std::map<std::string, double> Player::commonInfo =
@@ -20,18 +21,22 @@ Player::Player(const Player& other)
       strategyFunc(other.strategyFunc),
       strategy(other.strategy),
       strategies(other.strategies),
-      vars(other.vars) {
+      vars(other.vars),
+      qTable(other.qTable) {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   this->gen = std::mt19937(seed);  //< 以时间为种子生成随机数
 }
 
-Player::Player(std::string name, int score, std::vector<Action> actions) {
+Player::Player(std::string name, int score, std::vector<Action> actions,
+               double epsilon) {
   this->name = name;
   this->score = score;
   this->actions = actions;
   this->actionPossibility = std::vector<double>(actions.size(), 0);
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   this->gen = std::mt19937(seed);  //< 以时间为种子生成随机数
+  this->epsilon = epsilon;
+  // this->qTable = QTable();
 }
 
 Player::~Player() {}
@@ -69,16 +74,15 @@ Player::~Player() {}
  * @param mu 动作突变率
  * @return Action
  */
-Action Player::donate(std::string recipientReputation, double mu) {
-  // 从形参构建key
-  std::string key = this->strategy.getName();
-  key += "!" + recipientReputation;
-
-  // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
-  Action resAction = this->strategyFunc[key];
-  if (resAction.getName() == "") {
-    std::cerr << "key: " << key << " not found" << std::endl;
-    throw "action not found";
+Action Player::donate(std::string recipientReputation, double mu, bool train) {
+  Action resAction;
+  if (train) {
+    /** 使用qTable 来出动作 */
+    resAction = this->getActionFromQTable(recipientReputation);
+  } else {
+    /** 使用 确定 strategy 的离散函数出动作 */
+    resAction = this->getActionFromStrategyTable(this->strategy.getName(),
+                                                 recipientReputation);
   }
 
   // mu概率Action突变
@@ -94,16 +98,14 @@ Action Player::donate(std::string recipientReputation, double mu) {
   return resAction;
 }
 
-Action Player::reward(std::string donorActionName, double mu) {
-  // 从形参构建key
-  std::string key = this->strategy.getName();
-  key += "!" + donorActionName;
-
-  // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
-  Action resAction = this->strategyFunc[key];
-  if (resAction.getName() == "") {
-    std::cerr << "key: " << key << " not found" << std::endl;
-    throw "action not found";
+Action Player::reward(std::string donorActionName, double mu, bool train) {
+  Action resAction;
+  if (train) {
+    /** 通过 qTable 出动作 */
+    resAction = this->getActionFromQTable(donorActionName);
+  } else {
+    resAction = this->getActionFromStrategyTable(this->strategy.getName(),
+                                                 donorActionName);
   }
 
   // mu概率Action突变
@@ -269,15 +271,58 @@ double Player::getProbability() {
 }
 
 /**
- * @brief 输出随机整数
- * 
- * @param input 
- * @return int 
+ * @brief 输出随机整数 [start, end]
+ *
+ * @param input
+ * @return int
  */
 int Player::getRandomInt(int start, int end) {
-  std::uniform_int_distribution<int> randomInt(start, end); //< 从 [start, end]中取随机整数
+  std::uniform_int_distribution<int> randomInt(
+      start, end);  //< 从 [start, end]中取随机整数
   int randInt = randomInt(this->gen);
   return randInt;
+}
+
+Action Player::getActionFromStrategyTable(const std::string& strategyName,
+                                          const std::string& input) const {
+  /** 使用 确定 strategy 的离散函数出动作 */
+  // 从形参构建key
+  std::string key = strategyName;
+  key += "!" + input;
+  // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
+  Action resAction = this->strategyFunc.at(key);
+  if (resAction.getName() == "") {
+    std::cerr << "key: " << key << " not found" << std::endl;
+    throw "action not found";
+  }
+  return resAction;
+}
+
+/**
+ * @brief 输入一个字符(字符可能是 reputation 或者 actionName)
+ *
+ * @param input  reputation / actionName
+ * @return Action
+ */
+Action Player::getActionFromQTable(const std::string& input) {
+  // 抛出一个随机double
+  double p = this->getProbability();
+  Action resAction;
+  if (p < this->epsilon) {
+    auto tempActions = this->actions;
+    resAction = this->getRandomAction(tempActions);
+  } else {
+    auto [actionName, actionId] = this->qTable.getBestOutput(input);
+    resAction = Action(actionName, actionId);
+  }
+  assert(resAction.getName() != "" && "action not found");
+  // C++ 17特性，结构化绑定
+  return resAction;
+}
+
+void Player::initQTable(const std::vector<std::string>& rowNames,
+                        const std::vector<std::string>& colNames) {
+  this->qTable = QTable(rowNames, colNames);
 }
 
 Action Player::getRandomAction(std::vector<Action>& alterActions) {

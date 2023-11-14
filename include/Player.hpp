@@ -12,13 +12,13 @@
 
 #include "Action.hpp"
 #include "PayoffMatrix.hpp"
+#include "QTable.hpp"
 
 class Player {
   /** 利用静态变量的特性来维护公共信息，数据类型为map，key为string，value 为
    * double */
  private:
   static std::map<std::string, double> commonInfo;
-
   std::string name;
   int score;
 
@@ -40,18 +40,23 @@ class Player {
 
   std::map<std::string, double> vars;
 
+  /** 针对q-learning 训练场景下 strategy 未确定的属性，区分：strategy 代表确定的策略，由csv文件存储，并通过hash方式被读取为一个离散函数，而 q-table 则是一个单纯的二维数组 */
+  QTable qTable;
+  /** greedy-epsilon */
+  double epsilon;
+
  public:
   Player(const Player &other);
-  Player(std::string name, int score, std::vector<Action> actions);
+  Player(std::string name, int score, std::vector<Action> actions, double epsilon = 0);
   ~Player();
 
   /** 根据动作概率返回一个动作 */
   Action play();
 
   /** 根据输入返回一个动作，需要strategyTables */
-  Action donate(std::string recipientReputation, double mu = 0);
+  Action donate(std::string recipientReputation, double mu = 0, bool train = false);
 
-  Action reward(std::string donorActionName, double mu = 0);
+  Action reward(std::string donorActionName, double mu = 0, bool train = false);
 
   /**根据查询到的收益的delta值，更新分数*/
   void updateScore(double delta) {
@@ -171,6 +176,19 @@ class Player {
   int getRandomInt(int start, int end);
 
   double getDeltaScore() const { return this->deltaScore; }
+
+
+  // 通过 strategyTable 出动作
+  Action getActionFromStrategyTable(
+      const std::string &strategyName,
+      const std::string &recipientReputation) const;
+  
+  // 通过 qTable 出动作
+  Action getActionFromQTable(const std::string &input);
+
+  void initQTable(const std::vector<std::string> &rowNames,
+                  const std::vector<std::string> &colNames);
+
 };
 
 #endif  // !PLAYER_HPP

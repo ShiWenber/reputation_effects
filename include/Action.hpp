@@ -10,6 +10,7 @@ class Action {
   double payoff; //< 行动收益
  public:
   Action(std::string name, int id);
+  Action(const Action &action);
   Action();
   ~Action();
 
