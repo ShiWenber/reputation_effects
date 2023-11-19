@@ -72,7 +72,9 @@
     },
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE": "/home/shiwenbo/git/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_TARGET_ARCHITECTURE": "x64-linux"
+        "CMAKE_TARGET_ARCHITECTURE": "x64-linux",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_ASSERTS": "OFF"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

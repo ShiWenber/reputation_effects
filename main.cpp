@@ -1,7 +1,8 @@
 /**
- * @file rock-paper-scissors.cpp
+ * @file main.cpp
  * @author ShiWenber (1210169842@qq.com)
- * @brief 石头剪刀布博弈模拟
+ * @brief the simulation of the evolution of cooperation based on the static
+ * payoff matrix (combined the reputation and norm)
  * @version 0.1
  * @date 2023-09-12
  *
@@ -9,6 +10,18 @@
  *
  */
 
+#define CREATE_BAR(n)                                                   \
+  ProgressBar bar##n {                                                  \
+    option::BarWidth{50}, option::Start{" ["}, option::Fill{"*"},       \
+        option::Lead{"*"}, option::Remainder{"-"}, option::End{"]"},    \
+        option::PrefixText{"Progress: " + std::to_string(n) + " "},     \
+        option::ShowElapsedTime{true}, option::ShowRemainingTime{true}, \
+        option::FontStyles {                                            \
+      std::vector<FontStyle> { FontStyle::bold }                        \
+    }                                                                   \
+  }
+
+#include <cmath>
 #include <iostream>
 // 导入字典类型
 #include <fmt/os.h>
@@ -22,12 +35,13 @@
 #include <string>
 // #include <execution>
 // #include <tbb/task.h>
-
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
 
-#include<indicators/cursor_control.hpp>
-#include<indicators/progress_bar.hpp>
+#include <indicators/cursor_control.hpp>
+#include <indicators/dynamic_progress.hpp>
+#include <indicators/progress_bar.hpp>
+#include <numeric>
 
 #include "Action.hpp"
 #include "Norm.hpp"
@@ -38,6 +52,7 @@
 #define REPUTATION_STR "reputation"
 
 using namespace std;
+using namespace indicators;
 using namespace std::chrono;
 
 /**
@@ -74,6 +89,28 @@ void applyStrategyChange(
     strategyName2Id[it->second.first].erase(it->first);
     strategyName2Id[it->second.second].insert(it->first);
   }
+}
+
+double getAvgPayoff(Strategy donorStrategy, Strategy recipientStrategy,
+                    PayoffMatrix payoffMatrix,
+                    unordered_map<string, set<int>> strategyName2donorId,
+                    unordered_map<string, set<int>> strategyName2recipientId,
+                    int population) {
+  double eval_donor = 0;
+  double eval_recipient = 0;
+  vector<double> players_payoff =
+      payoffMatrix.getPayoff(donorStrategy, recipientStrategy);
+  double eval_same =
+      accumulate(players_payoff.begin(), players_payoff.end(), 0.0) / 2;
+  for (int j = 0; j < 4; j++) {
+    Strategy d_stra = payoffMatrix.getRowStrategies()[j];
+    Strategy r_stra = payoffMatrix.getColStrategies()[j];
+    eval_donor += payoffMatrix.getPayoff(donorStrategy, r_stra)[0] *
+                  strategyName2recipientId[r_stra.getName()].size() * 0.5;
+    eval_recipient += payoffMatrix.getPayoff(d_stra, recipientStrategy)[1] *
+                      strategyName2donorId[d_stra.getName()].size() * 0.5;
+  }
+  return (1.0 / (population - 1)) * (eval_donor + eval_recipient - eval_same);
 }
 
 /**
@@ -171,154 +208,89 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
  * @return int
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
-          int gamma, double mu, int normId, int updateStepNum) {
-    using namespace indicators;
+          int gamma, double mu, int normId, int updateStepNum, double p0,
+          ProgressBar *bar = nullptr, bool turn_up_progress_bar = false,
+          DynamicProgress<ProgressBar> *dynamic_bar = nullptr,
+          bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0) {
+  // // Hide cursor
+  // show_console_cursor(false);
 
-  // Hide cursor
-  show_console_cursor(false);
-
-  indicators::ProgressBar bar{
-    option::BarWidth{50},
-    option::Start{" ["},
-    option::Fill{"*"},
-    option::Lead{"*"},
-    option::Remainder{"-"},
-    option::End{"]"},
-    option::PrefixText{"Progress: "},
-    // option::ForegroundColor{Color::yellow},
-    option::ShowElapsedTime{true},
-    option::ShowRemainingTime{true},
-    option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-  };
-
-
+  // indicators::ProgressBar bar{
+  //     option::BarWidth{50}, option::Start{" ["}, option::Fill{"*"},
+  //     option::Lead{"*"}, option::Remainder{"-"}, option::End{"]"},
+  //     option::PrefixText{"Progress: "},
+  //     // option::ForegroundColor{Color::yellow},
+  //     option::ShowElapsedTime{true}, option::ShowRemainingTime{true},
+  //     option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}};
 
   string normName = "norm" + to_string(normId);
 
-  cout << "---" << endl;
-
   // 加载payoffMatrix
-  cout << "---------->>" << endl;
-  PayoffMatrix payoffMatrix_g("./GPayoffMatrix.csv");
-  fmt::print("payoffMatrix_g: {}\n", payoffMatrix_g.getPayoffMatrixStr());
-  // 输出需要赋值的所有变量
-  fmt::print("vars: {}\n", payoffMatrix_g.getVars());
-  cout << "after assign:" << endl;
+  // cout << "---------->>" << endl;
+  PayoffMatrix payoffMatrix("./payoffMatrix/PayoffMatrix" + to_string(normId) +
+                            ".csv");
+  // fmt::print("payoffMatrix_g: {}\n", payoffMatrix_g.getPayoffMatrixStr());
+  // // 输出需要赋值的所有变量
+  // fmt::print("vars: {}\n", payoffMatrix_g.getVars());
+  // cout << "after assign:" << endl;
 
-  // vars: {b: 0, beta: 0, c: 0, gamma: 0, lambda: 0, }
-  // 赋值后
-  payoffMatrix_g.updateVar("b", b);
-  payoffMatrix_g.updateVar("beta", beta);
-  payoffMatrix_g.updateVar("c", c);
-  payoffMatrix_g.updateVar("gamma", gamma);
-  //   payoffMatrix_g.updateVar("lambda", 1);
-  fmt::print("vars: {}\n", payoffMatrix_g.getVars());
+  // assign vars
+  payoffMatrix.updateVar("b", b);
+  payoffMatrix.updateVar("beta", beta);
+  payoffMatrix.updateVar("c", c);
+  payoffMatrix.updateVar("gamma", gamma);
+  payoffMatrix.updateVar("p0", p0);
 
-  payoffMatrix_g.evalPayoffMatrix();
-  cout << "after eval:" << endl;
-  for (int r = 0; r < payoffMatrix_g.getRowNum(); r++) {
-    for (int c = 0; c < payoffMatrix_g.getColNum(); c++) {
-      for (int p = 0; p < payoffMatrix_g.getPlayerNum(); p++) {
-        cout << payoffMatrix_g.getPayoffMatrix()[r][c][p] << ",";
-      }
-      cout << "\t";
-    }
-    cout << endl;
-  }
-  cout << "---------<<" << endl;
+  payoffMatrix.evalPayoffMatrix();
 
-  cout << "--------->>" << endl;
-  PayoffMatrix payoffMatrix_b("./BPayoffMatrix.csv");
-  fmt::print("payoffMatrix_b: {}\n", payoffMatrix_b.getPayoffMatrixStr());
-  // 输出需要赋值的所有变量
-  fmt::print("payoffMatrix_b vars: {}\n", payoffMatrix_b.getVars());
+  // cout << "after eval:" << endl;
+  // for (int r = 0; r < payoffMatrix_g.getRowNum(); r++) {
+  //   for (int c = 0; c < payoffMatrix_g.getColNum(); c++) {
+  //     for (int p = 0; p < payoffMatrix_g.getPlayerNum(); p++) {
+  //       cout << payoffMatrix_g.getPayoffMatrix()[r][c][p] << ",";
+  //     }
+  //     cout << "\t";
+  //   }
+  //   cout << endl;
+  // }
+  // cout << "---------<<" << endl;
 
-  // vars: {b: 0, beta: 0, c: 0, gamma: 0, lambda: 0, }
-  // 赋值后
-  // payoffMatrix_b.updateVar("b", 1);
-  // payoffMatrix_b.updateVar("beta", 4);
-  // payoffMatrix_b.updateVar("c", 1);
-  // payoffMatrix_b.updateVar("gamma", 1);
-  payoffMatrix_b.setVars(payoffMatrix_g.getVars());
-  //   payoffMatrix_b.updateVar("lambda", 1);
-  cout << "after assign:" << endl;
-  fmt::print("payoffMatrix_b vars: {}\n", payoffMatrix_b.getVars());
-
-  payoffMatrix_b.evalPayoffMatrix();
-  cout << "after eval:" << endl;
-  for (int r = 0; r < payoffMatrix_b.getRowNum(); r++) {
-    for (int c = 0; c < payoffMatrix_b.getColNum(); c++) {
-      for (int p = 0; p < payoffMatrix_b.getPlayerNum(); p++) {
-        cout << payoffMatrix_b.getPayoffMatrix()[r][c][p] << ",";
-      }
-      cout << "\t";
-    }
-    cout << endl;
-  }
-
-  cout << "---------<<" << endl;
-
-  // 设置公共信息
-  //   Player::addCommonInfo("lambda", 1);
-  fmt::print("commonInfo: {}\n", Player::getCommonInfo());
-
-  // 初始化两个博弈玩家
+  // initialize two players
   vector<Action> donorActions;
   donorActions.push_back(Action("C", 0));
   donorActions.push_back(Action("D", 1));
   Player donor("donor", 0, donorActions);
-  vector<Strategy> donorStrategies;
-  donorStrategies.push_back(Strategy("C", 0));
-  donorStrategies.push_back(Strategy("OC", 1));
-  donorStrategies.push_back(Strategy("OD", 2));
-  donorStrategies.push_back(Strategy("D", 3));
+  vector<Strategy> donorStrategies = payoffMatrix.getRowStrategies();
   donor.setStrategies(donorStrategies);
   donor.loadStrategy("./strategy");
-  fmt::print("donorStrategies: {}\n", donor.getStrategyTables());
-  // TODO: 设置初始策略
+  // fmt::print("donorStrategies: {}\n", donor.getStrategyTables());
   donor.setStrategy("C");
 
   vector<Action> recipientActions;
   recipientActions.push_back(Action("C", 0));
   recipientActions.push_back(Action("D", 1));
   Player recipient("recipient", 0, recipientActions);
-  vector<Strategy> recipientStrategies;
-  recipientStrategies.push_back(Strategy("NR", 0));
-  recipientStrategies.push_back(Strategy("SR", 1));
-  recipientStrategies.push_back(Strategy("AR", 2));
-  recipientStrategies.push_back(Strategy("UR", 3));
+  vector<Strategy> recipientStrategies = payoffMatrix.getColStrategies();
   recipient.setStrategies(recipientStrategies);
 
   recipient.loadStrategy("./strategy");
-  fmt::print("recipientStrategies: {}\n", recipient.getStrategyTables());
-  // TODO: 设置初始化策略
+  // fmt::print("recipientStrategies: {}\n", recipient.getStrategyTables());
   recipient.setStrategy("NR");
 
-  // 给声誉一个 0-1 的随机整数
-  // 时间随机种子
-  // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-  // default_random_engine gen(seed);
-  // uniform_int_distribution<int> dis(0, 1);
-  // recipient.addVar(REPUTATION_STR, dis(gen));
-
+  // initialize recipient's reputation
   recipient.addVar(REPUTATION_STR, 1);
-  fmt::print("recipient vars: {}\n", recipient.getVars());
+  // fmt::print("recipient vars: {}\n", recipient.getVars());
 
-  // for (int normNumber = 1; normNumber < 16; normNumber++) {
-  //   normName = "norm" + to_string(normNumber);
-
-  // 加载norm
+  // load norm
   string normPath = "./norm/" + normName + ".csv";
   Norm norm(normPath);
-  fmt::print("norm: {}\n", norm.getNormTableStr());
+  // fmt::print("norm: {}\n", norm.getNormTableStr());
 
-  // 以上面的博弈者对作模板生成population对博弈者
+  // the two players are used as templates to generate population players
   vector<Player> donors;
   vector<Player> recipients;
-  // 使用不同的时间种子生成随机数
-  unsigned seed_don = chrono::system_clock::now()
-                          .time_since_epoch()
-                          .count();  // 加上指定值避免紧挨的种子相同
+  // time seed
+  unsigned seed_don = chrono::system_clock::now().time_since_epoch().count();
   default_random_engine gen_don(seed_don);
   uniform_int_distribution<int> dis_don(0, donorStrategies.size() - 1);
 
@@ -332,36 +304,69 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   default_random_engine gen_reputation(seed_reputation);
   uniform_int_distribution<int> dis_reputation(0, 1);
 
+  unsigned seed_probability =
+      chrono::system_clock::now().time_since_epoch().count() + 3;
+  mt19937 gen_probability(seed_probability);
+  uniform_real_distribution<double> dis_probability(0, 1);
+
+  // record the strategy distribution of the population
   unordered_map<string, set<int>> strategyName2DonorId;
   unordered_map<string, set<int>> strategyName2RecipientId;
+  // judge if population can be divided by donorStrategies.size()
+  assert(population % donorStrategies.size() == 0);
+
+  // reputation init vector
+  vector<int> reputation_value(ceil(population * (1 - p0)), 0);
+  vector<int> good_rep_value((int)population * p0, 1);
+  assert(reputation_value.size() + good_rep_value.size() == population);
+
+  reputation_value.insert(reputation_value.end(), good_rep_value.begin(),
+                          good_rep_value.end());
+  random_shuffle(reputation_value.begin(), reputation_value.end());
+
+  // strategy init vector
+  vector<int> donor_stra_id;
+  vector<int> recipient_stra_id;
+  for (int i = 0; i < donorStrategies.size(); i++) {
+    donor_stra_id.insert(donor_stra_id.end(),
+                         population / (double)donorStrategies.size(), i);
+    recipient_stra_id.insert(recipient_stra_id.end(),
+                             population / (double)recipientStrategies.size(),
+                             i);
+  }
+  assert(donor_stra_id.size() == population &&
+         recipient_stra_id.size() == population);
+  random_shuffle(donor_stra_id.begin(), donor_stra_id.end());
+  random_shuffle(recipient_stra_id.begin(), recipient_stra_id.end());
+
+  // initialize population players that have different strategies, and each
+  // strategy has the same number of players
   for (int i = 0; i < population; i++) {
     Player temp_donor(donor);
     Player temp_recipient(recipient);
+    int donor_stra_i = donor_stra_id[i];
+    int recipient_stra_i = recipient_stra_id[i];
 
-    temp_donor.setStrategy(donorStrategies[dis_don(gen_don)]);
+    temp_donor.setStrategy(donorStrategies[donor_stra_i]);
     strategyName2DonorId[temp_donor.getStrategy().getName()].insert(i);
     donors.push_back(temp_donor);
 
-    temp_recipient.setStrategy(recipientStrategies[dis_rec(gen_rec)]);
-    // temp_recipient.updateVar(REPUTATION_STR, dis_reputation(gen_reputation));
-    // 固定声誉为1
-    temp_recipient.updateVar(REPUTATION_STR, 1);
+    temp_recipient.setStrategy(recipientStrategies[recipient_stra_i]);
+    temp_recipient.updateVar(REPUTATION_STR, reputation_value[i]);
+    // // 固定声誉为1
+    // temp_recipient.updateVar(REPUTATION_STR, 1);
 
     strategyName2RecipientId[temp_recipient.getStrategy().getName()].insert(i);
     recipients.push_back(temp_recipient);
   }
 
-  printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-                  strategyName2DonorId, strategyName2RecipientId, population, 0,
-                  true);
+  // printStatistics(donors, recipients, donorStrategies, recipientStrategies,
+  //                 strategyName2DonorId, strategyName2RecipientId, population,
+  //                 0, false);
 
-  // donor.setStrategy("OC");
-  // recipient.setStrategy("NR");
-  // recipient.updateVar(REPUTATION_STR, 0);
-
-  // TODO: log对象
+  // log
   string logDir = "./log/" + normName + "/";
-  // 判断路径存不存在，如果不存在就新建
+  // judge if the path exists, if not, create it
   if (!filesystem::exists(logDir)) {
     filesystem::create_directory(logDir);
   }
@@ -371,9 +376,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                    to_string(b) + "_beta-" + to_string(beta) + "_c-" +
                    to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
                    to_string(mu) + "_norm-" + normName + "_uStepN-" +
-                   to_string(updateStepNum) + ".csv";
+                   to_string(updateStepNum) + "_p0-" + to_string(p0) + ".csv";
   auto out = fmt::output_file(logDir + logName);
-  // 生成表头
+  // generate header
   string line = "step";
   for (Strategy donorS : donorStrategies) {
     for (Strategy recipientS : recipientStrategies) {
@@ -393,157 +398,168 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       strategyName2DonorId, strategyName2RecipientId, population, 0, false);
   out.print("{}\n", logLine);
 
-  // 1. 固定博弈者对交互 TODO: 不固定博弈者对轮流交互取平均
+  uniform_int_distribution<int> dis(0, population - 1);
   for (int step = 0; step < stepNum; step++) {
-    bar.set_progress((double)step / stepNum * 100);
-
-    unordered_map<int, pair<string, string>> donor2StrateChange;
-    unordered_map<int, pair<string, string>> recipientId2StrateChange;
-
-    // for_each 并行
-    // vector<int> ids(population);
-    // std::for_each(std::execution::par, ids.begin(), ids.end(), [&](int i) {
-    for (int i = 0; i < population; i++) {  // --------------------->>1
-
-      // 判断recipient的策略是否存在
-
-      // cout << endl << "-------------------- step " << step << endl;
-      // 第一阶段 donors[i] 行动
-      Action donorAction = donors[i].donate(
-          std::to_string((int)recipients[i].getVarValue(REPUTATION_STR)), mu);
-      // fmt::print("donorStrategy:{0}, donorAction: {1}\n",
-      //            donors[i].getStrategy().getName(), donorAction.getName());
-      // 第二阶段 recipients[i] 行动，记录本轮声望
-      Action recipientAction = recipients[i].reward(donorAction.getName(), mu);
-      double currentReputation = recipients[i].getVarValue(REPUTATION_STR);
-      // fmt::print("recipientStrategy:{0}, recipientAction: {1}\n",
-      //            recipients[i].getStrategy().getName(),
-      //            recipientAction.getName());
-      // 第三阶段 更新recipient 的声誉
-      double newReputation = norm.getReputation(donorAction, recipientAction);
-      // fmt::print("reputation : {} -> ", currentReputation);
-      // fmt::print("new: {} \n", newReputation);
-      recipients[i].updateVar(REPUTATION_STR, newReputation);
-      // 第四阶段 结算双方收益
-      double donorPayoff, recipientPayoff;
-      if (currentReputation == 1) {
-        donorPayoff = payoffMatrix_g.getPayoff(donors[i].getStrategy(),
-                                               recipients[i].getStrategy())[0];
-        recipientPayoff = payoffMatrix_g.getPayoff(
-            donors[i].getStrategy(), recipients[i].getStrategy())[1];
-      } else if (currentReputation == 0) {
-        donorPayoff = payoffMatrix_b.getPayoff(donors[i].getStrategy(),
-                                               recipients[i].getStrategy())[0];
-        recipientPayoff = payoffMatrix_b.getPayoff(
-            donors[i].getStrategy(), recipients[i].getStrategy())[1];
+    // update progress bar
+    if (turn_up_progress_bar) {
+      // (*bar).set_progress((double)step / stepNum * 100);
+      // 只在进度条每增加1%时更新一次
+      // only update once when the progress bar increases by 1%
+      if (step % (stepNum / 100) == 0) {
+        (*bar).tick();
       }
-      donors[i].updateScore(donorPayoff);
-      recipients[i].updateScore(recipientPayoff);
-      // fmt::print("donors[i]:{0}, recipients[i]:{1}\n", donorPayoff,
-      //            recipientPayoff);
-    }  // ----------<<1
-    // });  // 并行
-
-    // 未到更新轮数或者step为0，跳过更新策略
-    if (step == 0 || step % updateStepNum != 0) {
-      continue;
+    } else if (turn_up_dynamic_bar) {
+      if (step % (stepNum / 100) == 0) {
+        (*dynamic_bar)[dynamic_bar_id].tick();
+      }
     }
 
-    // 更新策略
-    for (int i = 0; i < population; i++) {  // --------------------->>2
-      // 第五阶段 更新双方策略
-      // 更新donor策略
+    // // record the strategy change of the population to update
+    // strategyName2donorId and strategyName2recipientId unordered_map<int,
+    // pair<string, string>> donor2StrateChange; unordered_map<int, pair<string,
+    // string>> recipientId2StrateChange;
 
-      // 抽取一个种群中的其他人，将其策略更新
-      // 如果抽到自己就重新抽取
-      int randId = 0;
+    // The random number of 0-population is extracted
+    int focul_i = dis(gen_don);
+    int rolemodel_i = dis(gen_rec);
+    // to prevent the same person from being drawn
+    while (focul_i == rolemodel_i) {
+      focul_i = dis(gen_don);
+      rolemodel_i = dis(gen_rec);
+    }
+
+    // mutation probability to explore other strategies randomly
+    double p = dis_probability(gen_probability);
+    assert(p >= 0 && p <= 1);
+    // there is a probability of mu to explore other strategies randomly
+    if (p < mu) {
+      // update the focul's strategy
+      int randId_d = 0;
+      int randId_r = 0;
       do {
-        randId = donors[i].getRandomInt(0, population - 1);
-      } while (randId == i);
+        randId_d = donors[focul_i].getRandomInt(0, donorStrategies.size() - 1);
+        randId_r =
+            recipients[focul_i].getRandomInt(0, recipientStrategies.size() - 1);
+      } while (randId_d == donors[focul_i].getStrategy().getId() &&
+               randId_r == recipients[focul_i].getStrategy().getId());
 
-      // 初始化为int的极小值
-      int newPayoff = INT_MIN;
-      newPayoff = donors[randId].getDeltaScore();
+      //   // record the strategy change of the population to update
+      //   distribution after the step ends donor2StrateChange[focul_i] =
+      //       make_pair(donors[focul_i].getStrategy().getName(),
+      //                 donorStrategies[randId].getName());
 
-      if (newPayoff == INT_MIN) {
-        cerr << "newPayoff is INT_MIN" << endl;
-        throw "newPayoff is INT_MIN";
+      strategyName2DonorId[donors[focul_i].getStrategy().getName()].erase(
+          focul_i);
+      donors[focul_i].setStrategy(donorStrategies[randId_d]);
+      strategyName2DonorId[donorStrategies[randId_d].getName()].insert(focul_i);
+
+      //   // record the strategy change of the population to update
+      //   distribution after the step ends
+      //   recipientId2StrateChange[rolemodel_i] =
+      //       make_pair(recipients[rolemodel_i].getStrategy().getName(),
+      //                 recipientStrategies[randId].getName());
+      strategyName2RecipientId[recipients[focul_i].getStrategy().getName()]
+          .erase(focul_i);
+      recipients[focul_i].setStrategy(recipientStrategies[randId_r]);
+      strategyName2RecipientId[recipientStrategies[randId_r].getName()].insert(
+          focul_i);
+    } else {
+      Strategy rolemodel_donorStrategy = donors[rolemodel_i].getStrategy();
+      Strategy rolemodel_recipientStrategy =
+          recipients[rolemodel_i].getStrategy();
+      double rolemodel_payoff = getAvgPayoff(
+          rolemodel_donorStrategy, rolemodel_recipientStrategy, payoffMatrix,
+          strategyName2DonorId, strategyName2RecipientId, population);
+
+      Strategy focul_donorStrategy = donors[focul_i].getStrategy();
+      Strategy focul_recipientStrategy = recipients[focul_i].getStrategy();
+      double focul_payoff = getAvgPayoff(
+          focul_donorStrategy, focul_recipientStrategy, payoffMatrix,
+          strategyName2DonorId, strategyName2RecipientId, population);
+
+      // fermi
+      if (dis_probability(gen_probability) <
+          fermi(focul_payoff, rolemodel_payoff, s)) {
+        strategyName2DonorId[donors[focul_i].getStrategy().getName()].erase(
+            focul_i);
+        donors[focul_i].setStrategy(rolemodel_donorStrategy);
+        strategyName2DonorId[rolemodel_donorStrategy.getName()].insert(focul_i);
+
+        strategyName2RecipientId[recipients[focul_i].getStrategy().getName()]
+            .erase(focul_i);
+        recipients[focul_i].setStrategy(rolemodel_recipientStrategy);
+        strategyName2RecipientId[rolemodel_recipientStrategy.getName()].insert(
+            focul_i);
       }
+    }
 
-      // 费米更新
-      // 抛出一个随机概率，如果小于费米概率就更新为新策略
-      // TODO: 可以改为增量式的，由set自己维护自己的平均收益可以减少一层循环
-      if (donors[i].getProbability() <
-          fermi(donors[i].getDeltaScore(), newPayoff, s)) {
-        // 记录转变
-        donor2StrateChange[i] =
-            make_pair(donors[i].getStrategy().getName(),
-                      donors[randId].getStrategy().getName());
+    // // apply the strategy change of the population
+    // applyStrategyChange(strategyName2DonorId, donor2StrateChange);
+    // applyStrategyChange(strategyName2RecipientId, recipientId2StrateChange);
 
-        donors[i].setStrategy(donors[randId].getStrategy());
-
-      }
-
-      // 更新recipient策略
-      do {
-        randId = recipients[i].getRandomInt(0, population - 1);
-      } while (randId == i);
-
-      // 初始化为int的极小值
-      newPayoff = INT_MIN;
-      newPayoff = recipients[randId].getDeltaScore();
-
-      if (newPayoff == INT_MIN) {
-        cout << "newPayoff is INT_MIN" << endl;
-        throw "newPayoff is INT_MIN";
-      }
-
-      if (recipients[i].getProbability() <
-          fermi(recipients[i].getDeltaScore(), newPayoff, s)) {
-        // 记录转变
-        recipientId2StrateChange[i] =
-            make_pair(recipients[i].getStrategy().getName(),
-                      recipients[randId].getStrategy().getName());
-        recipients[i].setStrategy(recipients[randId].getStrategy());
-
-      }
-      // 更新后清空deltaScore
-      donors[i].clearDeltaScore();
-      recipients[i].clearDeltaScore();
-    }  // --------------<<2
-
-    // 第六阶段，本轮末尾应用所有转变
-    applyStrategyChange(strategyName2DonorId, donor2StrateChange);
-    applyStrategyChange(strategyName2RecipientId, recipientId2StrateChange);
-
-    // 生成log
-    out.print("{}\n", printStatistics(donors, recipients, donorStrategies,
-                                      recipientStrategies, strategyName2DonorId,
-                                      strategyName2RecipientId, population,
-                                      step + 1, false));
+    int log_step = 1;
+    if (step % log_step == 0) {
+      // 生成log
+      out.print("{}\n",
+                printStatistics(donors, recipients, donorStrategies,
+                                recipientStrategies, strategyName2DonorId,
+                                strategyName2RecipientId, population, step + 1,
+                                false));
+    }
   }
 
-  // for (int i = 0; i < population; i++) {
-  //   fmt::print("\nscore: donors[{0}]: {1}, recipients[{0}]: {2}\n", i,
-  //              donors[i].getScore(), recipients[i].getScore());
-  // }
-
-  printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-                  strategyName2DonorId, strategyName2RecipientId, population,
-                  stepNum, true);
-
-  // Show cursor
-  show_console_cursor(true);
-
+  // printStatistics(donors, recipients, donorStrategies, recipientStrategies,
+  //                 strategyName2DonorId, strategyName2RecipientId, population,
+  //                 stepNum, false);
 }
 
 int main() {
-  // 记录运行时间
+
+// judge if NDEBUG is defined. If defined, the assert() will not work
+#ifdef NDEBUG
+  std::cout << "NDEBUG is defined\n";
+#else
+  std::cout << "NDEBUG is not defined\n";
+#endif
+
+  std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+
+  // record the running time
   system_clock::time_point start = chrono::system_clock::now();
-  tbb::task_arena arena(16);  // 创建一个并行度为4的arena
+  tbb::task_arena arena(8);
+
+  // // 硬编码16条进度条 TODO: 由于progressbar 采用单例模式，无法用vector管理
+  // dynamicprogressbar可以加入变长的progressbar引用
+  // 可以尝试用宏来帮助快速构建多个进度条
+  CREATE_BAR(0);
+  CREATE_BAR(1);
+  CREATE_BAR(2);
+  CREATE_BAR(3);
+  CREATE_BAR(4);
+  CREATE_BAR(5);
+  CREATE_BAR(6);
+  CREATE_BAR(7);
+
+  DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
+                                    bar7);
+
+  // CREATE_BAR(8);
+  // CREATE_BAR(9);
+
+  // DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
+  //                                   bar7, bar8, bar9);
+  CREATE_BAR(10);
+  CREATE_BAR(11);
+  CREATE_BAR(12);
+  CREATE_BAR(13);
+  CREATE_BAR(14);
+  CREATE_BAR(15);
+  // DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
+  //                                   bar7, bar8, bar9, bar10, bar11, bar12,
+  //                                   bar13, bar14, bar15);
 
   // 博弈参数
-  int stepNum = 3000;
+  int stepNum = 100;
   int population = 400;  // 人数，这里作为博弈对数，100表示100对博弈者
   double s = 1;          // 费米函数参数
 
@@ -551,36 +567,42 @@ int main() {
   int beta = 3;   // 公共参数
   int c = 1;      // 公共参数
   int gamma = 1;  // 公共参数
-  double mu = 0.05;  // 动作突变率
-  int normId = 10;
+  // double mu = 0.05;  // 动作突变率
+  double mu = 0.1;
+  int normId = 10;  // 均衡为 d-nr
+  double p0 = 0.9;
+  // int normId = 9;
   int updateStepNum = 1;  // 表示每隔多少步更新一次策略
 
+  // 进度条控制
+  show_console_cursor(false);
   // 调试使用
-  func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+  CREATE_BAR(100);
+  ProgressBar *bar100_ptr = &bar100;
+  func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum, p0,
+       bar100_ptr, true);
+  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
 
-  // 多线程加速
+  // // 多线程加速
   // arena.execute([&]() {
-  //   // for (int normId = 0; normId < 16; normId++) {
-  //   //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-  //   //        updateStepNum);
-  //   // }
-
-  //   for (int stepNum = 2000;  stepNum < 2050; stepNum++) {
+  //   tbb::parallel_for(10000, 10008, [&](int stepNum) {
   //     func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-  //          updateStepNum);
-  //   }
+  //     updateStepNum,
+  //          p0, nullptr, false, &bars, true, stepNum - 10000);
+  //   });
 
-
-  //   // tbb::parallel_for(0, 16, [&](int normId){
-  //   //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-  //   //   updateStepNum);
-  //   // });
+  //   // //   //   // tbb::parallel_for(0, 16, [&](int normId){
+  //   // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
+  //   // normId,
+  //   // //   //   //   updateStepNum);
+  //   // //   //   // });
   // });
 
   // for (int normId = 0; normId < 16; normId++) {
   //   func(stepNum, population, s, b, beta, c, gamma, mu, normId);
   // }
 
+  show_console_cursor(true);
   system_clock::time_point end = system_clock::now();
   cout << "\ntime: " << duration_cast<microseconds>(end - start).count() / 1e6
        << "s" << endl;

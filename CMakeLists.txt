@@ -2,6 +2,16 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(reputation_effects VERSION 0.1.0 LANGUAGES C CXX)
 
+option(ENABLE_ASSERTS "Enable asserts" OFF)
+
+if(NOT ENABLE_ASSERTS)
+    add_definitions(-DNDEBUG)
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

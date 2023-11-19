@@ -8,6 +8,10 @@ class Strategy {
   std::string name;  //< 行动名称
   int id;            //< 行动id
  public:
+
+ // overload operator
+ bool operator==(const Strategy &action) const { return this->id == action.id && this->name == action.name; }
+
   Strategy(std::string name, int id);
   Strategy();
   ~Strategy();

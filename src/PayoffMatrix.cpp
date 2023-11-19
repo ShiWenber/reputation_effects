@@ -1,6 +1,8 @@
 #include "PayoffMatrix.hpp"
 
 #include <muParser.h>
+#include <algorithm>
+#include <assert.h>
 
 #include <fstream>
 #include <iostream>
@@ -64,7 +66,7 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
           std::string playerName;
           while (getline(players_ss, playerName, ' ')) {
             // TODO: 这里可以读出博弈者名称
-            std::cout << playerName << std::endl;
+            // std::cout << playerName << std::endl;
             playerNum++;
           }
           // 读表达式变量，初始值为0
@@ -72,14 +74,16 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
             this->vars[valName] = 0;
           }
         } else {
-          this->strategys.push_back(Strategy(cell, strategyId++));
+          this->colStrategies.push_back(Strategy(cell, strategyId++));
         }
       }
-      colNum = this->strategys.size();
+      colNum = this->colStrategies.size();
     } else {
       rowNum++;
       int temp_colNum = 0;
-      std::getline(ss, cell, delimiter);  // 把第一列的动作名读掉
+      std::getline(ss, cell, delimiter);
+      // the cell is the rowStrategy name
+      this->rowStrategies.push_back(Strategy(cell, rowNum - 1));
       while (std::getline(ss, cell, delimiter)) {
         temp_colNum++;
         std::stringstream cell_ss(cell);
@@ -107,33 +111,34 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
       this->payoffMatrixStr.push_back(payoffMatrixRow);
     }
   }
-  // 输出动作集
-  std::cout << "stra: \t|";
-  // std::cout << "\t|";
-  for (Strategy strategy : this->strategys) {
-    std::cout << strategy.getName() << "\t|";
-  }
 
-  std::cout << std::endl;
-  for (int i = 0; i < this->strategys.size() + 1; i++) {
-    std::cout << "--------";
-  }
-  std::cout << std::endl;
+  // // 输出动作集
+  // std::cout << "stra: \t|";
+  // // std::cout << "\t|";
+  // for (Strategy strategy : this->strategies) {
+  //   std::cout << strategy.getName() << "\t|";
+  // }
 
-  // 输出收益矩阵
-  for (int r = 0; r < this->payoffMatrixStr.size(); r++) {
-    for (int c = 0; c < this->payoffMatrixStr[r].size() + 1; c++) {
-      if (c == 0) {
-        std::cout << this->strategys[r].getName() << "\t|";
-      } else {
-        for (int p = 0; p < this->payoffMatrixStr[r][c - 1].size(); p++) {
-          std::cout << this->payoffMatrixStr[r][c - 1][p] << " ";
-        }
-        std::cout << "\t|";
-      }
-    }
-    std::cout << std::endl;
-  }
+  // std::cout << std::endl;
+  // for (int i = 0; i < this->strategies.size() + 1; i++) {
+  //   std::cout << "--------";
+  // }
+  // std::cout << std::endl;
+
+  // // 输出收益矩阵
+  // for (int r = 0; r < this->payoffMatrixStr.size(); r++) {
+  //   for (int c = 0; c < this->payoffMatrixStr[r].size() + 1; c++) {
+  //     if (c == 0) {
+  //       std::cout << this->strategies[r].getName() << "\t|";
+  //     } else {
+  //       for (int p = 0; p < this->payoffMatrixStr[r][c - 1].size(); p++) {
+  //         std::cout << this->payoffMatrixStr[r][c - 1][p] << " ";
+  //       }
+  //       std::cout << "\t|";
+  //     }
+  //   }
+  //   std::cout << std::endl;
+  // }
 
   this->colNum = colNum;
   this->rowNum = rowNum;
@@ -155,9 +160,12 @@ PayoffMatrix::~PayoffMatrix() {}
  * TODO: 完成输出值从string表达式到double的转换
  */
 std::vector<double> PayoffMatrix::getPayoff(Strategy strategyA, Strategy strategyB) {
+  // strategyA必须来自行策略集，strategyB必须来自列策略集
+  assert(std::find(this->rowStrategies.begin(), this->rowStrategies.end(), strategyA) != this->rowStrategies.end());
+  assert(std::find(this->colStrategies.begin(), this->colStrategies.end(), strategyB) != this->colStrategies.end());
   int idA = strategyA.getId();
   int idB = strategyB.getId();
-  if (idA < this->strategys.size() && idB < this->strategys.size()) {
+  if (idA < this->colStrategies.size() && idB < this->colStrategies.size()) {
     return this->payoffMatrix[idA][idB];
   } else {
     std::cerr << "strategy id not found" << std::endl;

@@ -19,6 +19,7 @@
                     // it gets resolved by CMake Tools:
                     "name": "PATH",
                     "value": "$PATH:${command:cmake.launchTargetDirectory}"
+                    // "value": "PATH:${workspaceFolder}"
                 },
                 {
                     "name": "OTHER_VALUE",

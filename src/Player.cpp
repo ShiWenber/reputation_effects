@@ -175,7 +175,7 @@ void Player::loadStrategy(const std::string& strategyPath) {
         strategyPath + "/" + this->name + "/" + strategyName + ".csv";
 
     try {
-      std::cout << "strategyCSVPath: " << strategyCSVPath << std::endl;
+      // std::cout << "strategyCSVPath: " << strategyCSVPath << std::endl;
       std::ifstream csvFile(strategyCSVPath);
       if (!csvFile.is_open()) {
         std::cerr << "Failed to open file: " << strategyCSVPath << std::endl;

@@ -12,7 +12,7 @@ Norm::~Norm() {}
 
 void Norm::loadNormFunc(std::string csvPath) {
   try {
-    std::cout << "normcsvPath: " << csvPath << std::endl;
+    // std::cout << "normcsvPath: " << csvPath << std::endl;
     std::ifstream csvFile(csvPath);
     if (!csvFile.is_open()) {
       std::cerr << "Failed to open file: " << csvPath << std::endl;
