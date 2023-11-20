@@ -532,7 +532,7 @@ int main() {
 
   // record the running time
   system_clock::time_point start = chrono::system_clock::now();
-  tbb::task_arena arena(8);
+  tbb::task_arena arena(11);
 
   // // 硬编码16条进度条 TODO: 由于progressbar 采用单例模式，无法用vector管理
   // dynamicprogressbar可以加入变长的progressbar引用
@@ -563,7 +563,13 @@ int main() {
 
   // 博弈参数
   int stepNum = 100;
-  int population = 400;  // 人数，这里作为博弈对数，100表示100对博弈者
+  int population = 160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是 4 * 4 的倍数
+
+  if (population % 16 != 0) {
+    cerr << "population must be a multiple of 16" << endl;
+    return 0;
+  }
+
   double s = 1;          // 费米函数参数
 
   int b = 4;      // 公共参数
@@ -583,15 +589,14 @@ int main() {
   // CREATE_BAR(100);
   // ProgressBar *bar100_ptr = &bar100;
   // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
-  // p0,
-  //      bar100_ptr, true);
+  // p0, bar100_ptr, true);
   // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
 
   // 多线程加速
 
   arena.execute([&]() {
-    int start = 10000;
-    int end = 10016;
+    int start = 100000;
+    int end = 100012;
     tbb::parallel_for(start, end, [&](int stepNum) {
       func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
            p0, nullptr, false, &bars, true, stepNum - start);
