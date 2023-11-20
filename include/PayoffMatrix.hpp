@@ -25,7 +25,7 @@ class PayoffMatrix {
   ~PayoffMatrix();
 
  // TODO: 完成
-  std::vector<double> getPayoff(Strategy strategyA, Strategy strategyB);
+  std::vector<double> getPayoff(const Strategy& strategyA,const Strategy& strategyB) const;
   // std::vector<double> getPayoff()
 
   std::vector<std::vector<std::vector<double>>> getPayoffMatrix() const { return this->payoffMatrix; }

@@ -159,7 +159,7 @@ PayoffMatrix::~PayoffMatrix() {}
  * 返回的第一个元素是动作A的实施者的收益，第二个元素是动作B的实施者的收益，这将会把原本payoffmatrix元素中的表达式的值计算出来
  * TODO: 完成输出值从string表达式到double的转换
  */
-std::vector<double> PayoffMatrix::getPayoff(Strategy strategyA, Strategy strategyB) {
+std::vector<double> PayoffMatrix::getPayoff(const Strategy& strategyA,const Strategy& strategyB) const {
   // strategyA必须来自行策略集，strategyB必须来自列策略集
   assert(std::find(this->rowStrategies.begin(), this->rowStrategies.end(), strategyA) != this->rowStrategies.end());
   assert(std::find(this->colStrategies.begin(), this->colStrategies.end(), strategyB) != this->colStrategies.end());
