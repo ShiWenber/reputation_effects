@@ -324,28 +324,35 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                           good_rep_value.end());
   random_shuffle(reputation_value.begin(), reputation_value.end());
 
-  // strategy init vector
+  // strategy init vector, each strategy pair has the same number of players
   vector<int> donor_stra_id;
   vector<int> recipient_stra_id;
   for (int i = 0; i < donorStrategies.size(); i++) {
     donor_stra_id.insert(donor_stra_id.end(),
                          population / (double)donorStrategies.size(), i);
-    recipient_stra_id.insert(recipient_stra_id.end(),
-                             population / (double)recipientStrategies.size(),
-                             i);
+    for (int j = 0; j < recipientStrategies.size(); j++) {
+      recipient_stra_id.insert(recipient_stra_id.end(),
+                               (population / (double)donorStrategies.size()) /
+                                   (double)recipientStrategies.size(),
+                               j);
+    }
   }
   assert(donor_stra_id.size() == population &&
          recipient_stra_id.size() == population);
-  random_shuffle(donor_stra_id.begin(), donor_stra_id.end());
-  random_shuffle(recipient_stra_id.begin(), recipient_stra_id.end());
+  vector<pair<int, int>> stra_id_pairs;
+  for (int i = 0; i < donor_stra_id.size(); i++) {
+    stra_id_pairs.push_back(make_pair(donor_stra_id[i], recipient_stra_id[i]));
+  }
+  random_shuffle(stra_id_pairs.begin(), stra_id_pairs.end());
 
   // initialize population players that have different strategies, and each
   // strategy has the same number of players
   for (int i = 0; i < population; i++) {
     Player temp_donor(donor);
     Player temp_recipient(recipient);
-    int donor_stra_i = donor_stra_id[i];
-    int recipient_stra_i = recipient_stra_id[i];
+    // int donor_stra_i = donor_stra_id[i];
+    // int recipient_stra_i = recipient_stra_id[i];
+    auto [donor_stra_i, recipient_stra_i] = stra_id_pairs[i];
 
     temp_donor.setStrategy(donorStrategies[donor_stra_i]);
     strategyName2DonorId[temp_donor.getStrategy().getName()].insert(i);
@@ -514,7 +521,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 }
 
 int main() {
-
 // judge if NDEBUG is defined. If defined, the assert() will not work
 #ifdef NDEBUG
   std::cout << "NDEBUG is defined\n";
@@ -540,23 +546,20 @@ int main() {
   CREATE_BAR(6);
   CREATE_BAR(7);
 
-  DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
-                                    bar7);
-
-  // CREATE_BAR(8);
-  // CREATE_BAR(9);
-
   // DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
-  //                                   bar7, bar8, bar9);
+  //                                   bar7);
+
+  CREATE_BAR(8);
+  CREATE_BAR(9);
   CREATE_BAR(10);
   CREATE_BAR(11);
   CREATE_BAR(12);
   CREATE_BAR(13);
   CREATE_BAR(14);
   CREATE_BAR(15);
-  // DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
-  //                                   bar7, bar8, bar9, bar10, bar11, bar12,
-  //                                   bar13, bar14, bar15);
+  DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
+                                    bar7, bar8, bar9, bar10, bar11, bar12,
+                                    bar13, bar14, bar15);
 
   // 博弈参数
   int stepNum = 100;
@@ -570,37 +573,36 @@ int main() {
   // double mu = 0.05;  // 动作突变率
   double mu = 0.1;
   int normId = 10;  // 均衡为 d-nr
-  double p0 = 0.9;
+  double p0 = 0.5;
   // int normId = 9;
   int updateStepNum = 1;  // 表示每隔多少步更新一次策略
 
-  // 进度条控制
   show_console_cursor(false);
-  // 调试使用
-  CREATE_BAR(100);
-  ProgressBar *bar100_ptr = &bar100;
-  func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum, p0,
-       bar100_ptr, true);
+
+  // // 调试使用
+  // CREATE_BAR(100);
+  // ProgressBar *bar100_ptr = &bar100;
+  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
+  // p0,
+  //      bar100_ptr, true);
   // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
 
-  // // 多线程加速
-  // arena.execute([&]() {
-  //   tbb::parallel_for(10000, 10008, [&](int stepNum) {
-  //     func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-  //     updateStepNum,
-  //          p0, nullptr, false, &bars, true, stepNum - 10000);
-  //   });
+  // 多线程加速
 
-  //   // //   //   // tbb::parallel_for(0, 16, [&](int normId){
-  //   // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
-  //   // normId,
-  //   // //   //   //   updateStepNum);
-  //   // //   //   // });
-  // });
+  arena.execute([&]() {
+    int start = 10000;
+    int end = 10016;
+    tbb::parallel_for(start, end, [&](int stepNum) {
+      func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
+           p0, nullptr, false, &bars, true, stepNum - start);
+    });
 
-  // for (int normId = 0; normId < 16; normId++) {
-  //   func(stepNum, population, s, b, beta, c, gamma, mu, normId);
-  // }
+    //   // //   //   // tbb::parallel_for(0, 16, [&](int normId){
+    //   // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
+    //   // normId,
+    //   // //   //   //   updateStepNum);
+    //   // //   //   // });
+  });
 
   show_console_cursor(true);
   system_clock::time_point end = system_clock::now();
