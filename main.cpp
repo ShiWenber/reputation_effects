@@ -73,28 +73,10 @@ double fermi(double payoff_current, double payoff_new, double s) {
   return res;
 }
 
-/**
- * @brief 应用转变
- *
- * @param strategyName2Id
- * @param player2StrategyChange
- */
-void applyStrategyChange(
-    unordered_map<string, set<int>> &strategyName2Id,
-    unordered_map<int, pair<string, string>> player2StrategyChange) {
-  for (auto it = player2StrategyChange.begin();
-       it != player2StrategyChange.end(); it++) {
-    // it->second.first 是 from
-    // it->second.second 是 to
-    strategyName2Id[it->second.first].erase(it->first);
-    strategyName2Id[it->second.second].insert(it->first);
-  }
-}
-
-double getAvgPayoff(Strategy donorStrategy, Strategy recipientStrategy,
-                    PayoffMatrix payoffMatrix,
-                    unordered_map<string, set<int>> strategyName2donorId,
-                    unordered_map<string, set<int>> strategyName2recipientId,
+double getAvgPayoff(const Strategy& donorStrategy,const Strategy& recipientStrategy,
+                    const PayoffMatrix& payoffMatrix,
+                    const unordered_map<string, set<int>>& strategyName2donorId,
+                    const unordered_map<string, set<int>>& strategyName2recipientId,
                     int population) {
   double eval_donor = 0;
   double eval_recipient = 0;
@@ -106,9 +88,9 @@ double getAvgPayoff(Strategy donorStrategy, Strategy recipientStrategy,
     Strategy d_stra = payoffMatrix.getRowStrategies()[j];
     Strategy r_stra = payoffMatrix.getColStrategies()[j];
     eval_donor += payoffMatrix.getPayoff(donorStrategy, r_stra)[0] *
-                  strategyName2recipientId[r_stra.getName()].size() * 0.5;
+                  strategyName2recipientId.at(r_stra.getName()).size() * 0.5;
     eval_recipient += payoffMatrix.getPayoff(d_stra, recipientStrategy)[1] *
-                      strategyName2donorId[d_stra.getName()].size() * 0.5;
+                      strategyName2donorId.at(d_stra.getName()).size() * 0.5;
   }
   return (1.0 / (population - 1)) * (eval_donor + eval_recipient - eval_same);
 }
@@ -130,11 +112,11 @@ double getAvgPayoff(Strategy donorStrategy, Strategy recipientStrategy,
  * @param print
  * @return string
  */
-string printStatistics(vector<Player> donors, vector<Player> recipients,
-                       vector<Strategy> donorStrategies,
-                       vector<Strategy> recipientStrategies,
-                       unordered_map<string, set<int>> strategyName2DonorId,
-                       unordered_map<string, set<int>> strategyName2RecipientId,
+string printStatistics(const vector<Player>& donors, const vector<Player>& recipients,
+                       const vector<Strategy>& donorStrategies,
+                       const vector<Strategy>& recipientStrategies,
+                       const unordered_map<string, set<int>>& strategyName2DonorId,
+                       const unordered_map<string, set<int>>& strategyName2RecipientId,
                        int population, int step, bool print) {
   double population_double = (double)population;
   unordered_map<string, int> strategyPair2Num;
@@ -160,13 +142,13 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
       fmt::print("{0}: {1}, ", key,
-                 strategyName2DonorId[key].size() / population_double);
+                 strategyName2DonorId.at(key).size() / population_double);
     }
     fmt::print("\n");
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
       fmt::print("{0}: {1}, ", key,
-                 strategyName2RecipientId[key].size() / population_double);
+                 strategyName2RecipientId.at(key).size() / population_double);
     }
   } else {
     for (Strategy donorS : donorStrategies) {
@@ -178,11 +160,11 @@ string printStatistics(vector<Player> donors, vector<Player> recipients,
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
       logLine +=
-          "," + to_string(strategyName2DonorId[key].size() / population_double);
+          "," + to_string(strategyName2DonorId.at(key).size() / population_double);
     }
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
-      logLine += "," + to_string(strategyName2RecipientId[key].size() /
+      logLine += "," + to_string(strategyName2RecipientId.at(key).size() /
                                  population_double);
     }
   }
@@ -500,11 +482,11 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       }
     }
 
-    // // apply the strategy change of the population
-    // applyStrategyChange(strategyName2DonorId, donor2StrateChange);
-    // applyStrategyChange(strategyName2RecipientId, recipientId2StrateChange);
 
     int log_step = 1;
+    // if (stepNum > 10000) {
+    //   log_step = stepNum / 10;
+    // }
     if (step % log_step == 0) {
       // 生成log
       out.print("{}\n",
@@ -602,12 +584,12 @@ int main() {
            p0, nullptr, false, &bars, true, stepNum - start);
     });
 
-    //   // //   //   // tbb::parallel_for(0, 16, [&](int normId){
-    //   // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
-    //   // normId,
-    //   // //   //   //   updateStepNum);
-    //   // //   //   // });
-  });
+  //   //   // //   //   // tbb::parallel_for(0, 16, [&](int normId){
+  //   //   // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
+  //   //   // normId,
+  //   //   // //   //   //   updateStepNum);
+  //   //   // //   //   // });
+  // });
 
   show_console_cursor(true);
   system_clock::time_point end = system_clock::now();
