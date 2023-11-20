@@ -584,7 +584,7 @@ int main() {
   //   //   // normId,
   //   //   // //   //   //   updateStepNum);
   //   //   // //   //   // });
-  // });
+  });
 
   show_console_cursor(true);
   system_clock::time_point end = system_clock::now();
