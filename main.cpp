@@ -567,29 +567,29 @@ int main() {
 
   show_console_cursor(false);
 
-  // // 调试使用
-  // CREATE_BAR(100);
-  // ProgressBar *bar100_ptr = &bar100;
-  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
-  // p0, bar100_ptr, true);
+  // 调试使用
+  CREATE_BAR(100);
+  ProgressBar *bar100_ptr = &bar100;
+  func(1000000000, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
+  p0, bar100_ptr, true);
   // // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
 
   // 多线程加速
 
-  arena.execute([&]() {
-    int start = 1000000;
-    int end = 1000012;
-    tbb::parallel_for(start, end, [&](int stepNum) {
-      func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
-           p0, nullptr, false, &bars, true, stepNum - start);
-    });
+  // arena.execute([&]() {
+  //   int start = 1000000;
+  //   int end = 1000012;
+  //   tbb::parallel_for(start, end, [&](int stepNum) {
+  //     func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
+  //          p0, nullptr, false, &bars, true, stepNum - start);
+  //   });
 
-      // //   //   // tbb::parallel_for(0, 16, [&](int normId){
-      // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
-      // normId,
-      // //   //   //   updateStepNum);
-      // //   //   // });
-  });
+  //     // //   //   // tbb::parallel_for(0, 16, [&](int normId){
+  //     // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
+  //     // normId,
+  //     // //   //   //   updateStepNum);
+  //     // //   //   // });
+  // });
 
   show_console_cursor(true);
   system_clock::time_point end = system_clock::now();
