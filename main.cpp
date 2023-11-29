@@ -484,9 +484,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
 
     int log_step = 1;
-    // if (stepNum > 10000) {
-    //   log_step = stepNum / 10;
-    // }
+    if (stepNum > 100000) {
+      log_step = stepNum / 100000;
+    }
     if (step % log_step == 0) {
       // 生成log
       out.print("{}\n",
@@ -561,7 +561,7 @@ int main() {
   // double mu = 0.05;  // 动作突变率
   double mu = 0.1;
   int normId = 10;  // 均衡为 d-nr
-  double p0 = 0.5;
+  double p0 = 1;
   // int normId = 9;
   int updateStepNum = 1;  // 表示每隔多少步更新一次策略
 
@@ -578,7 +578,7 @@ int main() {
 
   arena.execute([&]() {
     int start = 100000;
-    int end = 100012;
+    int end = 100011;
     tbb::parallel_for(start, end, [&](int stepNum) {
       func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
            p0, nullptr, false, &bars, true, stepNum - start);
