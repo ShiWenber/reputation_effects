@@ -1,5 +1,5 @@
-Donor Recipient:b c beta gamma lambda p,NR,SR,AR,UR
-C,-c:b,beta-c:b-gamma,-c:b,beta-c:b-gamma
-DISC,0:0,p*(beta-c):p*(b-gamma),(beta-c)/2:(b-gamma)/2,beta-c:b-gamma
-NDISC,-c:b,(beta-c)/2:(b-gamma)/2,(1-p)*(-c)+p*beta:(1-p)*b+p*(-gamma),beta:-gamma
+Donor Recipient:gamma beta c b p,NR,SR,AR,UR
+C,-c:b,beta - c:b - gamma,-c:b,beta - c:b - gamma
+DISC,0:0,p*(beta - c):p*(b - gamma),beta/2 - c/2:b/2 - gamma/2,beta - c:b - gamma
+NDISC,-c:b,beta/2 - c/2:b/2 - gamma/2,beta*p + c*(p - 1):-b*p + b - gamma*p,beta:-gamma
 D,0:0,0:0,beta:-gamma,beta:-gamma

@@ -73,11 +73,12 @@ double fermi(double payoff_current, double payoff_new, double s) {
   return res;
 }
 
-double getAvgPayoff(const Strategy& donorStrategy,const Strategy& recipientStrategy,
-                    const PayoffMatrix& payoffMatrix,
-                    const unordered_map<string, set<int>>& strategyName2donorId,
-                    const unordered_map<string, set<int>>& strategyName2recipientId,
-                    int population) {
+double getAvgPayoff(
+    const Strategy& donorStrategy, const Strategy& recipientStrategy,
+    const PayoffMatrix& payoffMatrix,
+    const unordered_map<string, set<int>>& strategyName2donorId,
+    const unordered_map<string, set<int>>& strategyName2recipientId,
+    int population) {
   double eval_donor = 0;
   double eval_recipient = 0;
   vector<double> players_payoff =
@@ -112,12 +113,13 @@ double getAvgPayoff(const Strategy& donorStrategy,const Strategy& recipientStrat
  * @param print
  * @return string
  */
-string printStatistics(const vector<Player>& donors, const vector<Player>& recipients,
-                       const vector<Strategy>& donorStrategies,
-                       const vector<Strategy>& recipientStrategies,
-                       const unordered_map<string, set<int>>& strategyName2DonorId,
-                       const unordered_map<string, set<int>>& strategyName2RecipientId,
-                       int population, int step, bool print) {
+string printStatistics(
+    const vector<Player>& donors, const vector<Player>& recipients,
+    const vector<Strategy>& donorStrategies,
+    const vector<Strategy>& recipientStrategies,
+    const unordered_map<string, set<int>>& strategyName2DonorId,
+    const unordered_map<string, set<int>>& strategyName2RecipientId,
+    int population, int step, bool print) {
   double population_double = (double)population;
   unordered_map<string, int> strategyPair2Num;
   string key;
@@ -159,8 +161,8 @@ string printStatistics(const vector<Player>& donors, const vector<Player>& recip
     }
     for (Strategy donorS : donorStrategies) {
       key = donorS.getName();
-      logLine +=
-          "," + to_string(strategyName2DonorId.at(key).size() / population_double);
+      logLine += "," + to_string(strategyName2DonorId.at(key).size() /
+                                 population_double);
     }
     for (Strategy recipientS : recipientStrategies) {
       key = recipientS.getName();
@@ -191,9 +193,9 @@ string printStatistics(const vector<Player>& donors, const vector<Player>& recip
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
           int gamma, double mu, int normId, int updateStepNum, double p0,
-          ProgressBar *bar = nullptr, bool turn_up_progress_bar = false,
-          DynamicProgress<ProgressBar> *dynamic_bar = nullptr,
-          bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0) {
+          ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
+          DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
+          bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0, int log_step = 1) {
   // // Hide cursor
   // show_console_cursor(false);
 
@@ -482,11 +484,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       }
     }
 
-
-    int log_step = 1;
-    if (stepNum > 100000) {
-      log_step = stepNum / 100000;
-    }
     if (step % log_step == 0) {
       // 生成log
       out.print("{}\n",
@@ -544,15 +541,16 @@ int main() {
                                     bar13, bar14, bar15);
 
   // 博弈参数
-  int stepNum = 100;
-  int population = 160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是 4 * 4 的倍数
+  int stepNum = 100000;
+  int population = 160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
+                         // 4 * 4 的倍数
 
   if (population % 16 != 0) {
     cerr << "population must be a multiple of 16" << endl;
     return 0;
   }
 
-  double s = 1;          // 费米函数参数
+  double s = 1;  // 费米函数参数
 
   int b = 4;      // 公共参数
   int beta = 3;   // 公共参数
@@ -567,29 +565,30 @@ int main() {
 
   show_console_cursor(false);
 
-  // 调试使用
-  CREATE_BAR(100);
-  ProgressBar *bar100_ptr = &bar100;
-  func(1000000000, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
-  p0, bar100_ptr, true);
-  // // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+  // // 调试使用
+  // CREATE_BAR(100);
+  // ProgressBar *bar100_ptr = &bar100;
+  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
+  // p0, bar100_ptr, true);
+  // // func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+  // updateStepNum);
 
   // 多线程加速
 
-  // arena.execute([&]() {
-  //   int start = 1000000;
-  //   int end = 1000012;
-  //   tbb::parallel_for(start, end, [&](int stepNum) {
-  //     func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
-  //          p0, nullptr, false, &bars, true, stepNum - start);
-  //   });
+  arena.execute([&]() {
+    // int start = 1000000;
+    // int end = 1000012;
+    // tbb::parallel_for(start, end, [&](int stepNum) {
+    //   func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+    //   updateStepNum,
+    //        p0, nullptr, false, &bars, true, stepNum - start);
+    // });
 
-  //     // //   //   // tbb::parallel_for(0, 16, [&](int normId){
-  //     // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
-  //     // normId,
-  //     // //   //   //   updateStepNum);
-  //     // //   //   // });
-  // });
+    tbb::parallel_for(0, 16, [&](int normId) {
+      func(stepNum, population, s, b, beta, c, gamma, mu, normId,
+           updateStepNum, p0, nullptr, false, &bars, true, normId, 2);
+    });
+  });
 
   show_console_cursor(true);
   system_clock::time_point end = system_clock::now();
