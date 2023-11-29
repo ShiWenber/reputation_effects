@@ -487,9 +487,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     if (stepNum > 100000) {
       log_step = stepNum / 100000;
     }
-    if (stepNum > 100000) {
-      log_step = stepNum / 100000;
-    }
     if (step % log_step == 0) {
       // 生成log
       out.print("{}\n",
