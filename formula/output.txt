@@ -1,51 +1,51 @@
 do_stg_name,re_stg_name,norm_no,res
-C,NR,4,-c:b
-NDISC,SR,12,beta/2 - c/2:b/2 - gamma/2
-NDISC,UR,6,beta + c*p - c:-b*p + b - gamma
-DISC,UR,3,beta - c/2:b/2 - gamma
-C,SR,5,beta - c:b - gamma
-D,SR,14,0:0
-C,NR,1,-c:b
-DISC,UR,3,beta - c/2:b/2 - gamma
+C,NR,9,-c:b
+C,UR,4,beta - c:b - gamma
+D,NR,13,0:0
+D,NR,9,0:0
+C,UR,2,beta - c:b - gamma
+D,AR,15,beta:-gamma
+C,AR,1,-c:b
+D,UR,12,beta:-gamma
+C,AR,4,-c:b
+D,SR,3,0:0
+D,SR,5,0:0
+C,AR,10,-c:b
+C,UR,10,beta - c:b - gamma
+NDISC,NR,11,c*(p - 1):b*(1 - p)
+D,SR,6,0:0
+NDISC,AR,2,beta*p + c*(p - 1):-b*p + b - gamma*p
+D,NR,6,0:0
 NDISC,UR,8,beta - c/2:b/2 - gamma
-C,UR,12,beta - c:b - gamma
-C,UR,3,beta - c:b - gamma
-NDISC,SR,6,beta - c:b - gamma
-NDISC,UR,8,beta - c/2:b/2 - gamma
-C,AR,7,-c:b
-NDISC,UR,9,beta - c/2:b/2 - gamma
-DISC,SR,11,beta - c:b - gamma
-DISC,NR,8,0:0
-DISC,AR,13,-beta*p + beta - c*p:b*p + gamma*(p - 1)
-NDISC,SR,3,-(beta - c)*(p - 1):-(b - gamma)*(p - 1)
-DISC,UR,4,beta:-gamma
+DISC,NR,5,-c:b
 D,UR,15,beta:-gamma
-DISC,UR,8,beta - c*p:b*p - gamma
-C,UR,8,beta - c:b - gamma
-C,UR,1,beta - c:b - gamma
-DISC,NR,12,-c*p:b*p
-D,NR,2,0:0
-C,UR,14,beta - c:b - gamma
-DISC,SR,5,beta/2 - c/2:b/2 - gamma/2
 D,SR,0,0:0
-NDISC,AR,1,-c:b
-C,NR,1,-c:b
-NDISC,AR,1,-c:b
-C,NR,7,-c:b
-C,SR,12,beta - c:b - gamma
-C,UR,13,beta - c:b - gamma
-NDISC,SR,7,-(beta - c)*(p - 1):-(b - gamma)*(p - 1)
-C,NR,11,-c:b
-DISC,SR,14,p*(beta - c):p*(b - gamma)
-NDISC,UR,3,beta + c*p - c:-b*p + b - gamma
-D,NR,4,0:0
-D,SR,15,0:0
-D,SR,1,0:0
-DISC,SR,6,0:0
-DISC,SR,7,beta/2 - c/2:b/2 - gamma/2
-DISC,NR,15,-c:b
+D,AR,10,beta:-gamma
+DISC,AR,8,beta:-gamma
+D,SR,8,0:0
+D,NR,5,0:0
+D,AR,3,beta:-gamma
+C,UR,11,beta - c:b - gamma
+D,AR,1,beta:-gamma
+DISC,UR,11,beta - c:b - gamma
+D,NR,13,0:0
+NDISC,NR,14,-c/2:b/2
+D,NR,14,0:0
 C,SR,9,beta - c:b - gamma
-D,AR,0,beta:-gamma
-DISC,SR,2,0:0
-NDISC,UR,12,beta - c/2:b/2 - gamma
-DISC,NR,6,-c*p:b*p
+D,UR,10,beta:-gamma
+NDISC,NR,13,0:0
+NDISC,AR,5,beta/2 - c/2:b/2 - gamma/2
+NDISC,SR,14,beta/2 - c/2:b/2 - gamma/2
+DISC,NR,12,-c*p:b*p
+D,SR,11,0:0
+C,NR,0,-c:b
+DISC,NR,3,-c/2:b/2
+DISC,AR,2,beta/2 - c/2:b/2 - gamma/2
+D,SR,13,0:0
+D,AR,5,beta:-gamma
+NDISC,NR,2,-c:b
+D,UR,8,beta:-gamma
+NDISC,NR,13,0:0
+C,AR,12,-c:b
+C,NR,10,-c:b
+C,AR,0,-c:b
