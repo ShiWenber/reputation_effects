@@ -21,10 +21,39 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
 enable_testing()
 
+# fast-cpp-csv-parser
+###############
+# include(FetchContent)
+# # download and import header-only library fast cpp csv parser and put it in ./include
+# FetchContent_Declare(
+#   fast_cpp_csv_parser
+#   GIT_REPOSITORY git@github.com:ben-strasser/fast-cpp-csv-parser.git
+#   GIT_TAG master
+# )
+# FetchContent_MakeAvailable(fast_cpp_csv_parser)
+############### deprecated, for the library not in vcpkg, use git download to ./third_party manually
+
+# 判断 third_party/fast-cpp-csv-parser 是否存在，不存在则下载
+# check if third_party/fast-cpp-csv-parser exists, if not, download it
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/fast-cpp-csv-parser")
+    message(STATUS "Downloading fast-cpp-csv-parser")
+    execute_process(
+        COMMAND git submodule update --init ${CMAKE_SOURCE_DIR}/third_party/fast-cpp-csv-parser)
+else()
+    message(STATUS "fast-cpp-csv-parser exists")
+endif()
+
+####### fast-cpp-csv-parser doesn't have CMakeLists.txt, we can't use add_subdirectory
+# add_subdirectory(third_party/fast-cpp-csv-parser)
+# target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE third_party/fast-cpp-csv-parser/include)
+#######
+include_directories(third_party/fast-cpp-csv-parser)
+
 find_package(muparser CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(indicators CONFIG REQUIRED)
+
 
 include_directories(include)
 
