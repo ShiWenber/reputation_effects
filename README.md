@@ -1,8 +1,49 @@
 # game theory
 
-基于石头剪刀布的混合策略（即存在概率选择的策略）的博弈论试验
+## requirements
 
-该代码也可用于每步选定策略的博弈论试验，只要将特定策略概率设置为1，并每步修改策略即可（策略选择采用轮盘法，会导致当策略空间过大时，运行时间过长，可以通过添加random和definite两种策略选择方式来解决）。
+os: linux
+
+- [cmake](https://cmake.org/cmake/help/latest/guide/tutorial/index.html)
+- [vcpkg](https://vcpkg.io/en/)
+
+we use vcpkg to manage our dependencies, so you need to install vcpkg in your environment and make sure that `vcpkg` in your path environment variable. 
+For some libraries can't install by `vcpkg`, we use `git submodule` to manage them (they are in `./third_party`).
+our `git submodule` use the `ssh` protocol, so you need to set your `ssh` key in your github account first.
+if you encounter web connection problem, we also recommand you to use `ssh` url `git@github.com:<path>` for `git submodule`
+As for vcpkg, we don't know how to change its downloading protocol from `https` to `ssh`, so when you encounter web connection problem, you can only wait for it to finish or just try again.
+
+we use c++ to simulate the game, use python to analyze data, draw pictures and use python to automatically derive formulas.
+
+The python code is all put into the `.ipynb` file by us, and the running results and formula derivation process are attached, so you may also need to install `jupyter notebook` to render the `.ipynb` file.
+
+- [jupyter notebook](https://jupyter.org/install)
+
+Or you can use IDE that support rendering `.ipynb` file, such as `pycharm`, `vscode` and so on.
+
+## python virtual environment
+
+the python packages needed are in `requirements.txt`.
+
+## C++ project build
+
+<!-- TODO: this needs test! -->
+
+It is recommand to use IDE to load the cmake project.
+
+or use command line:
+
+```bash
+cd <project root>
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -DEABLE_ASSERTS=OFF # -DEABLE_ASSERTS=OFF will disable asserts and speed up the program by enabling compiler optimization flags -O3
+make
+```
+
+For loading the config file in `./norm`, `./strategy` and so on, you may need to move the exe file to the root of the project before running it.
+
+---
 
 ## 混合策略-纯策略
 

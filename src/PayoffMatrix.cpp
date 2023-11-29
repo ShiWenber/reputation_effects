@@ -91,7 +91,7 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
         std::vector<std::string> payoffList;
         int temp_playerNum = 0;
         while (std::getline(cell_ss, payoffForOnePlayer_str,
-                            ' ')) {  //< 空格分割的所有参与者的收益
+                            ':')) {  //< :分割所有参与者的收益
           temp_playerNum++;
           payoffList.push_back(payoffForOnePlayer_str);
         }

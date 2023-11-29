@@ -221,7 +221,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   payoffMatrix.updateVar("beta", beta);
   payoffMatrix.updateVar("c", c);
   payoffMatrix.updateVar("gamma", gamma);
-  payoffMatrix.updateVar("p0", p0);
+  payoffMatrix.updateVar("p", p0);
 
   payoffMatrix.evalPayoffMatrix();
 
@@ -484,9 +484,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
 
     int log_step = 1;
-    // if (stepNum > 10000) {
-    //   log_step = stepNum / 10;
-    // }
+    if (stepNum > 100000) {
+      log_step = stepNum / 100000;
+    }
     if (step % log_step == 0) {
       // 生成log
       out.print("{}\n",
@@ -572,23 +572,23 @@ int main() {
   // ProgressBar *bar100_ptr = &bar100;
   // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
   // p0, bar100_ptr, true);
-  // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
+  // // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum);
 
   // 多线程加速
 
   arena.execute([&]() {
-    int start = 100000;
-    int end = 100012;
+    int start = 1000000;
+    int end = 1000012;
     tbb::parallel_for(start, end, [&](int stepNum) {
       func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
            p0, nullptr, false, &bars, true, stepNum - start);
     });
 
-  //   //   // //   //   // tbb::parallel_for(0, 16, [&](int normId){
-  //   //   // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
-  //   //   // normId,
-  //   //   // //   //   //   updateStepNum);
-  //   //   // //   //   // });
+      // //   //   // tbb::parallel_for(0, 16, [&](int normId){
+      // //   //   //   func(stepNum, population, s, b, beta, c, gamma, mu,
+      // normId,
+      // //   //   //   updateStepNum);
+      // //   //   // });
   });
 
   show_console_cursor(true);
