@@ -1,51 +1,51 @@
 do_stg_name,re_stg_name,norm_no,res
-C,SR,8,p*(beta - c) + (1 - p)*(beta - c):p*(b - gamma) + (1 - p)*(b - gamma)
-C,UR,7,p*(beta - c) + (1 - p)*(beta - c):p*(b - gamma) + (1 - p)*(b - gamma)
-NDISC,AR,12,p*(beta - c*lamda)/(lamda + 1) + (1 - p)*(beta*lamda - c)/(lamda + 1):p*(b*lamda - gamma)/(lamda + 1) + (1 - p)*(b - gamma*lamda)/(lamda + 1)
-C,NR,14,-c*p - c*(1 - p):b*p + b*(1 - p)
-DISC,NR,4,-c*p:b*p
-DISC,SR,6,-p*(beta - c)*(lamda - 1):-p*(b - gamma)*(lamda - 1)
-DISC,AR,13,beta*(1 - p) - c*p:b*p - gamma*(1 - p)
-C,SR,13,p*(beta - c) + (1 - p)*(beta - c):p*(b - gamma) + (1 - p)*(b - gamma)
-C,AR,14,-c*p - c*(1 - p):b*p + b*(1 - p)
-DISC,NR,7,-c*lamda*(1 - p) - c*p:b*lamda*(1 - p) + b*p
-NDISC,NR,0,-c*lamda*p - c*(1 - p):b*lamda*p + b*(1 - p)
-C,AR,12,-c*p - c*(1 - p):b*p + b*(1 - p)
-D,SR,10,0:0
-C,UR,4,p*(beta - c) + (1 - p)*(beta - c):p*(b - gamma) + (1 - p)*(b - gamma)
-C,NR,11,-c*p - c*(1 - p):b*p + b*(1 - p)
-DISC,SR,12,p*(beta - c):p*(b - gamma)
-D,UR,0,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-C,NR,8,-c*p - c*(1 - p):b*p + b*(1 - p)
-C,SR,4,p*(beta - c) + (1 - p)*(beta - c):p*(b - gamma) + (1 - p)*(b - gamma)
-D,AR,2,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-NDISC,NR,7,c*(1 - p)*(lamda - 1):b*(1 - lamda)*(1 - p)
-NDISC,AR,9,-c*(1 - p) + p*(-beta*lamda + beta - c*lamda):b*(1 - p) + p*(b*lamda + gamma*(lamda - 1))
-DISC,NR,6,-c*p:b*p
-C,SR,4,p*(beta - c) + (1 - p)*(beta - c):p*(b - gamma) + (1 - p)*(b - gamma)
-D,SR,6,0:0
-NDISC,NR,14,-c*lamda*p/(lamda + 1) - c*(1 - p)/(lamda + 1):b*lamda*p/(lamda + 1) + b*(1 - p)/(lamda + 1)
-D,UR,7,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
+C,NR,4,-c:b
+NDISC,SR,12,beta/2 - c/2:b/2 - gamma/2
+NDISC,UR,6,beta + c*p - c:-b*p + b - gamma
+DISC,UR,3,beta - c/2:b/2 - gamma
+C,SR,5,beta - c:b - gamma
+D,SR,14,0:0
+C,NR,1,-c:b
+DISC,UR,3,beta - c/2:b/2 - gamma
+NDISC,UR,8,beta - c/2:b/2 - gamma
+C,UR,12,beta - c:b - gamma
+C,UR,3,beta - c:b - gamma
+NDISC,SR,6,beta - c:b - gamma
+NDISC,UR,8,beta - c/2:b/2 - gamma
+C,AR,7,-c:b
+NDISC,UR,9,beta - c/2:b/2 - gamma
+DISC,SR,11,beta - c:b - gamma
+DISC,NR,8,0:0
+DISC,AR,13,-beta*p + beta - c*p:b*p + gamma*(p - 1)
+NDISC,SR,3,-(beta - c)*(p - 1):-(b - gamma)*(p - 1)
+DISC,UR,4,beta:-gamma
+D,UR,15,beta:-gamma
+DISC,UR,8,beta - c*p:b*p - gamma
+C,UR,8,beta - c:b - gamma
+C,UR,1,beta - c:b - gamma
+DISC,NR,12,-c*p:b*p
+D,NR,2,0:0
+C,UR,14,beta - c:b - gamma
+DISC,SR,5,beta/2 - c/2:b/2 - gamma/2
+D,SR,0,0:0
+NDISC,AR,1,-c:b
+C,NR,1,-c:b
+NDISC,AR,1,-c:b
+C,NR,7,-c:b
+C,SR,12,beta - c:b - gamma
+C,UR,13,beta - c:b - gamma
+NDISC,SR,7,-(beta - c)*(p - 1):-(b - gamma)*(p - 1)
+C,NR,11,-c:b
+DISC,SR,14,p*(beta - c):p*(b - gamma)
+NDISC,UR,3,beta + c*p - c:-b*p + b - gamma
+D,NR,4,0:0
+D,SR,15,0:0
 D,SR,1,0:0
-NDISC,UR,9,p*(beta + lamda*(beta - c))/(lamda + 1) + (1 - p)*(beta*lamda + beta - c)/(lamda + 1):p*(-gamma + lamda*(b - gamma))/(lamda + 1) + (1 - p)*(b - gamma*lamda - gamma)/(lamda + 1)
-C,AR,6,-c*p - c*(1 - p):b*p + b*(1 - p)
-C,NR,1,-c*p - c*(1 - p):b*p + b*(1 - p)
-D,AR,5,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-D,AR,5,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-C,NR,11,-c*p - c*(1 - p):b*p + b*(1 - p)
-DISC,UR,1,beta*(1 - p) + p*(beta + c*lamda - c):-gamma*(1 - p) + p*(-b*lamda + b - gamma)
-DISC,UR,9,beta*(1 - p) + p*(beta - c):-gamma*(1 - p) + p*(b - gamma)
-D,NR,1,0:0
-D,SR,6,0:0
-D,AR,6,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-D,UR,0,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-D,AR,9,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-NDISC,AR,10,beta*p - c*(1 - p):b*(1 - p) - gamma*p
-DISC,UR,5,beta*(1 - p) + p*(beta + c*lamda - c):-gamma*(1 - p) + p*(-b*lamda + b - gamma)
-NDISC,SR,13,-(1 - p)*(beta - c)*(lamda - 1):-(1 - p)*(b - gamma)*(lamda - 1)
-NDISC,AR,11,beta*p - c*(1 - p):b*(1 - p) - gamma*p
-NDISC,SR,4,lamda*p*(beta - c) + (1 - p)*(beta - c):lamda*p*(b - gamma) + (1 - p)*(b - gamma)
-C,NR,5,-c*p - c*(1 - p):b*p + b*(1 - p)
-D,UR,8,beta*p + beta*(1 - p):-gamma*p - gamma*(1 - p)
-D,NR,0,0:0
-DISC,SR,7,lamda*(1 - p)*(beta - c)/(lamda + 1) + p*(beta - c)/(lamda + 1):lamda*(1 - p)*(b - gamma)/(lamda + 1) + p*(b - gamma)/(lamda + 1)
+DISC,SR,6,0:0
+DISC,SR,7,beta/2 - c/2:b/2 - gamma/2
+DISC,NR,15,-c:b
+C,SR,9,beta - c:b - gamma
+D,AR,0,beta:-gamma
+DISC,SR,2,0:0
+NDISC,UR,12,beta - c/2:b/2 - gamma
+DISC,NR,6,-c*p:b*p

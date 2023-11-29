@@ -1,5 +1,7 @@
 # game theory
 
+- [] TODO: 修改 formula/下的符号计算脚本，使得其能够自动化推断纳什均衡，要求适用范围为符号化表示的博弈收益矩阵：如何转化为矩阵方程？或者如何进行不等式推导
+
 ## requirements
 
 os: linux
