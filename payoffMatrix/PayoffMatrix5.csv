@@ -1,4 +1,4 @@
-Donor Recipient:gamma beta c b p,NR,SR,AR,UR
+Donor Recipient:beta b p c gamma,NR,SR,AR,UR
 C,-c:b,beta - c:b - gamma,-c:b,beta - c:b - gamma
 DISC,-c:b,beta/2 - c/2:b/2 - gamma/2,-beta*p + beta - c*p:b*p + gamma*(p - 1),beta:-gamma
 NDISC,0:0,-(beta - c)*(p - 1):-(b - gamma)*(p - 1),beta/2 - c/2:b/2 - gamma/2,beta - c:b - gamma

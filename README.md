@@ -27,6 +27,19 @@ Or you can use IDE that support rendering `.ipynb` file, such as `pycharm`, `vsc
 
 the python packages needed are in `requirements.txt`.
 
+## usage
+
+1. build the c++ project
+2. run `./build/reputation_effects --help` to see the command line options.
+
+or simply run `./build/reputation_effects` to run the program with default options.
+
+example:
+
+```bash
+./build/reputation_effects --threads 12 --population 160 --stepNum 1000
+```
+
 ## C++ project build
 
 <!-- TODO: this needs test! -->

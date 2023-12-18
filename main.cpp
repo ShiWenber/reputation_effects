@@ -26,6 +26,7 @@
 // 导入字典类型
 #include <fmt/os.h>
 #include <fmt/ranges.h>
+#include <gflags/gflags.h>
 
 #include <chrono>
 #include <climits>
@@ -73,6 +74,70 @@ double fermi(double payoff_current, double payoff_new, double s) {
   return res;
 }
 
+/**
+ * @brief Get the Coop Rate object,
+ * we randomly select two people from the population to play the game. Because
+ * there are identity differences between the two people, it is ordered, and
+ * there are A_n^2 = n * (n - 1) possible
+ *
+ * Among all these possible extractions, the number of times the *donor*
+ * cooperate is used as the numerator
+ *
+ * so the cooperation rate is possibleCoopNum / (n * (n - 1))
+ *
+ * This only reflects the probability of the donor to make a donation, and does
+ * not reflect the probability of the recipient to give feedback
+ *
+ * @param strategyPair2Num
+ * @param population
+ * @return double
+ */
+double getCoopRate(
+    const unordered_map<string, set<int>>& strategyName2donorId,
+    const unordered_map<string, set<int>>& strategyName2recipientId,
+    const int& population, const unordered_map<string, set<int>>& reputation2Id) {
+  double temp_sum = 0;
+  const int& n = population;
+  int good_rep_num = reputation2Id.at("1").size();
+
+  for (auto& [do_stg_name, donorIdSet] : strategyName2donorId) {
+
+    if (do_stg_name == "C") {
+      temp_sum += donorIdSet.size() * (n - 1);
+    } else if (do_stg_name == "D") {
+      // do nothing
+    } else if (do_stg_name == "DISC") {
+      // 如果好人中有DISC存在，那么乘 good_rep_num - 1 否则 乘 good_rep_num
+      //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘 good_rep_num - 1
+      
+      temp_sum += donorIdSet.size() * good_rep_num; // error, should reduce the number of "DISC" in good_rep_num
+    } else if (do_stg_name == "NDISC") {
+      // temp_sum += strategyName2donorId.at(do_stg_name).size() * (n - 1);
+      temp_sum += donorIdSet.size() * (n - good_rep_num);
+    } else {
+      cerr << "not support strategy name: " << do_stg_name << endl;
+      throw "not support strategy name";
+    }
+
+
+
+
+    for (auto& [strategyName, recipientIdSet] : strategyName2recipientId) {
+
+      for (auto& donorId : donorIdSet) {
+        for (auto& recipientId : recipientIdSet) {
+          if (donorId != recipientId) {
+            temp_sum += 1;
+          }
+        }
+      }
+
+    }
+  }
+
+  return temp_sum / (n * (n - 1));
+}
+
 double getAvgPayoff(
     const Strategy& donorStrategy, const Strategy& recipientStrategy,
     const PayoffMatrix& payoffMatrix,
@@ -98,8 +163,9 @@ double getAvgPayoff(
 
 /**
  * @brief  统计每个策略对的人数同时可以生成log行:
- * step, C-NR, C-SR, C-AR, C-UR, OC-NR, OC-SR, OC-AR, OC-UR, OD-NR, OD-SR,
- * OD-AR, OD-UR, D-NR, D-SR, D-AR, D-UR, C, OC, OD, D, NR, SR, AR, UR
+ * step, C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR, NDISC-NR,
+ * NDISC-SR, NDISC-AR, NDISC-UR, D-NR, D-SR, D-AR, D-UR, C, DISC, NDISC, D, NR,
+ * SR, AR, UR, cr
  *
  *
  * @param donors
@@ -121,12 +187,27 @@ string printStatistics(
     const unordered_map<string, set<int>>& strategyName2RecipientId,
     int population, int step, bool print) {
   double population_double = (double)population;
+  // unordered_map<string, int> strategyPair2Num;
   unordered_map<string, int> strategyPair2Num;
-  string key;
+  string key_str;
+  unordered_map<string, set<int>> reputation2Id;
   for (int i = 0; i < population; i++) {
-    key = donors[i].getStrategy().getName() + "-" +
-          recipients[i].getStrategy().getName();
-    strategyPair2Num[key]++;
+    const Player& donor = donors[i];
+    const Player& recipient = recipients[i];
+    key_str = donor.getStrategy().getName() + "-" +
+                    recipient.getStrategy().getName();
+    strategyPair2Num[key_str]++;
+
+    if (recipient.getVarValue(REPUTATION_STR) == 1.0) {
+      reputation2Id["1"].insert(i);
+    } else if (recipient.getVarValue(REPUTATION_STR) == 0.0) {
+      reputation2Id["0"].insert(i);
+    } else {
+      cerr << "reputation value error: " << recipient.getVarValue(REPUTATION_STR)
+           << endl;
+      throw "reputation value error";
+    }
+    assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
   }
 
   string logLine = to_string(step);
@@ -135,40 +216,47 @@ string printStatistics(
     fmt::print("strategyPair2Num: {}\n", strategyPair2Num);
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
-        key = donorS.getName() + "-" + recipientS.getName();
-        fmt::print("{0}: {1}, ", key,
-                   strategyPair2Num[key] / population_double);
+        key_str = donorS.getName() + "-" + recipientS.getName();
+        fmt::print("{0}: {1}, ", key_str,
+                   strategyPair2Num[key_str] / population_double);
       }
     }
     fmt::print("\n");
     for (Strategy donorS : donorStrategies) {
-      key = donorS.getName();
-      fmt::print("{0}: {1}, ", key,
-                 strategyName2DonorId.at(key).size() / population_double);
+      key_str = donorS.getName();
+      fmt::print("{0}: {1}, ", key_str,
+                 strategyName2DonorId.at(key_str).size() / population_double);
     }
     fmt::print("\n");
     for (Strategy recipientS : recipientStrategies) {
-      key = recipientS.getName();
-      fmt::print("{0}: {1}, ", key,
-                 strategyName2RecipientId.at(key).size() / population_double);
+      key_str = recipientS.getName();
+      fmt::print(
+          "{0}: {1}, ", key_str,
+          strategyName2RecipientId.at(key_str).size() / population_double);
     }
   } else {
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
-        key = donorS.getName() + "-" + recipientS.getName();
-        logLine += "," + to_string(strategyPair2Num[key] / population_double);
+        key_str =donorS.getName() + "-" + recipientS.getName();
+        logLine += "," + to_string(strategyPair2Num[key_str] / population_double);
       }
     }
     for (Strategy donorS : donorStrategies) {
-      key = donorS.getName();
-      logLine += "," + to_string(strategyName2DonorId.at(key).size() /
+      key_str = donorS.getName();
+      logLine += "," + to_string(strategyName2DonorId.at(key_str).size() /
                                  population_double);
     }
     for (Strategy recipientS : recipientStrategies) {
-      key = recipientS.getName();
-      logLine += "," + to_string(strategyName2RecipientId.at(key).size() /
+      key_str = recipientS.getName();
+      logLine += "," + to_string(strategyName2RecipientId.at(key_str).size() /
                                  population_double);
     }
+
+    logLine += "," + to_string(reputation2Id["1"].size());
+    double coop_rate = getCoopRate(  strategyName2DonorId,
+                                     strategyName2RecipientId,
+                                     population, reputation2Id);
+    logLine += "," + to_string(coop_rate);
   }
   return logLine;
 }
@@ -195,7 +283,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
           int gamma, double mu, int normId, int updateStepNum, double p0,
           ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
-          bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0, int log_step = 1) {
+          bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
+          int log_step = 1) {
   // // Hide cursor
   // show_console_cursor(false);
 
@@ -382,6 +471,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   for (Strategy recipientS : recipientStrategies) {
     line += "," + recipientS.getName();
   }
+  line += ",good_rep_num,cr";
+
   out.print("{}\n", line);
 
   string logLine = printStatistics(
@@ -499,7 +590,26 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   //                 stepNum, false);
 }
 
-int main() {
+DEFINE_int32(stepNum, 1000, "the number of steps");
+DEFINE_int32(population, 160, "the number of population");
+DEFINE_double(s, 1, "the parameter of fermi function");
+DEFINE_int32(b, 4, "the parameter of payoff matrix");
+DEFINE_int32(beta, 3, "the parameter of payoff matrix");
+DEFINE_int32(c, 1, "the parameter of payoff matrix");
+DEFINE_int32(gamma, 1, "the parameter of payoff matrix");
+DEFINE_double(mu, 0.05, "the probability of mutation");
+// DEFINE_int32(normId, 10, "the id of norm");
+DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
+DEFINE_double(p0, 1, "the probability of good reputation");
+DEFINE_int32(logStep, 1, "the number of steps to log");
+DEFINE_int32(threads, 11, "the number of threads");
+
+int main(int argc, char** argv) {
+
+gflags::SetUsageMessage("the simulation of the evolution of cooperation based on the static payoff matrix (combined the reputation and norm)");
+gflags::SetVersionString("0.1");
+gflags::ParseCommandLineFlags(&argc, &argv, true);
+
 // judge if NDEBUG is defined. If defined, the assert() will not work
 #ifdef NDEBUG
   std::cout << "NDEBUG is defined\n";
@@ -509,9 +619,16 @@ int main() {
 
   std::cout << "Current path is " << std::filesystem::current_path() << '\n';
 
+
+
   // record the running time
   system_clock::time_point start = chrono::system_clock::now();
-  tbb::task_arena arena(11);
+  // conform the number of threads is 1 <= threads <= 16
+  if (FLAGS_threads < 1 || FLAGS_threads > 16) {
+    cerr << "threads must be 1 <= threads <= 16" << endl;
+    return 0;
+  }
+  tbb::task_arena arena(FLAGS_threads);
 
   // // 硬编码16条进度条 TODO: 由于progressbar 采用单例模式，无法用vector管理
   // dynamicprogressbar可以加入变长的progressbar引用
@@ -541,27 +658,28 @@ int main() {
                                     bar13, bar14, bar15);
 
   // 博弈参数
-  int stepNum = 1000000000;
-  int population = 160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
-                         // 4 * 4 的倍数
+  // int stepNum = 100000;
+  // int population =
+  //     160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
+  //           // 4 * 4 的倍数
 
-  if (population % 16 != 0) {
+  if (FLAGS_population % 16 != 0) {
     cerr << "population must be a multiple of 16" << endl;
     return 0;
   }
 
-  double s = 1;  // 费米函数参数
+  // double s = 1;  // 费米函数参数
 
-  int b = 4;      // 公共参数
-  int beta = 3;   // 公共参数
-  int c = 1;      // 公共参数
-  int gamma = 1;  // 公共参数
-  // double mu = 0.05;  // 动作突变率
-  double mu = 0.0001;
-  int normId = 10;  // 均衡为 d-nr
-  double p0 = 1;
-  // int normId = 9;
-  int updateStepNum = 1;  // 表示每隔多少步更新一次策略
+  // int b = 4;      // 公共参数
+  // int beta = 3;   // 公共参数
+  // int c = 1;      // 公共参数
+  // int gamma = 1;  // 公共参数
+  // // double mu = 0.05;  // 动作突变率
+  // double mu = 0.1;
+  // int normId = 10;  // 均衡为 d-nr
+  // double p0 = 1;
+  // // int normId = 9;
+  // int updateStepNum = 1;  // 表示每隔多少步更新一次策略
 
   show_console_cursor(false);
 
@@ -585,8 +703,8 @@ int main() {
     // });
 
     tbb::parallel_for(0, 16, [&](int normId) {
-      func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-           updateStepNum, p0, nullptr, false, &bars, true, normId, 100000);
+      func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta, FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
+           FLAGS_p0, nullptr, false, &bars, true, normId, 2);
     });
   });
 
