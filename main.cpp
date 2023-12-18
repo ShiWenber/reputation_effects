@@ -541,7 +541,7 @@ int main() {
                                     bar13, bar14, bar15);
 
   // 博弈参数
-  int stepNum = 100000;
+  int stepNum = 1000000000;
   int population = 160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
                          // 4 * 4 的倍数
 
@@ -557,7 +557,7 @@ int main() {
   int c = 1;      // 公共参数
   int gamma = 1;  // 公共参数
   // double mu = 0.05;  // 动作突变率
-  double mu = 0.1;
+  double mu = 0.0001;
   int normId = 10;  // 均衡为 d-nr
   double p0 = 1;
   // int normId = 9;
@@ -586,7 +586,7 @@ int main() {
 
     tbb::parallel_for(0, 16, [&](int normId) {
       func(stepNum, population, s, b, beta, c, gamma, mu, normId,
-           updateStepNum, p0, nullptr, false, &bars, true, normId, 2);
+           updateStepNum, p0, nullptr, false, &bars, true, normId, 100000);
     });
   });
 
