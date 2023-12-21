@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(reputation_effects VERSION 0.1.0 LANGUAGES C CXX)
 
+set(CMAKE_TOOLCHAIN_FILE "/home/shiwenbo/git/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+
+include(${CMAKE_TOOLCHAIN_FILE})
+
 option(ENABLE_ASSERTS "Enable asserts" OFF)
 
 if(NOT ENABLE_ASSERTS)

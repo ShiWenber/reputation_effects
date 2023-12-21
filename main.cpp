@@ -284,7 +284,7 @@ string printStatistics(
  * @return int
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
-          int gamma, double mu, int normId, int updateStepNum, double p0,
+          int gamma, double mu, int normId, int updateStepNum, double p0, string payoff_matrix_config_name,
           ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
@@ -304,7 +304,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
   // 加载payoffMatrix
   // cout << "---------->>" << endl;
-  PayoffMatrix payoffMatrix("./payoffMatrix/PayoffMatrix" + to_string(normId) +
+  PayoffMatrix payoffMatrix("./payoffMatrix/" + payoff_matrix_config_name + "/" + "PayoffMatrix" + to_string(normId) +
                             ".csv");
   // fmt::print("payoffMatrix_g: {}\n", payoffMatrix_g.getPayoffMatrixStr());
   // // 输出需要赋值的所有变量
@@ -473,6 +473,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     {"mu", mu},
     {"normId", normId},
     {"p0", p0},
+    {"payoffMatrix", payoff_matrix_config_name},
     // not model parameters
     {"other",
      {
@@ -630,6 +631,7 @@ DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
 DEFINE_double(p0, 1, "the probability of good reputation");
 DEFINE_int32(logStep, 1, "the number of steps to log");
 DEFINE_int32(threads, 11, "the number of threads");
+DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error", "the name of payoff matrix config");
 
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(
@@ -732,7 +734,8 @@ int main(int argc, char** argv) {
     tbb::parallel_for(0, 16, [&](int normId) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
-           FLAGS_p0, nullptr, false, &bars, true, normId, 2);
+           FLAGS_p0, FLAGS_payoff_matrix_config_name,
+             nullptr, false, &bars, true, normId, 2);
     });
   });
 

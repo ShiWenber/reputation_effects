@@ -76,5 +76,6 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "ENABLE_ASSERTS": "OFF"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/g++"
+    "C_Cpp.default.compilerPath": "/usr/bin/g++",
+    "typewriterAutoScroll.enable": true
 }

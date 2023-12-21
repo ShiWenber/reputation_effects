@@ -1,51 +1,51 @@
 do_stg_name,re_stg_name,norm_no,res
-DISC,AR,6,-c:b
 DISC,AR,4,-beta*p + beta - c*p:b*p + gamma*(p - 1)
-NDISC,SR,13,0:0
-C,NR,10,-c:b
-D,UR,0,beta:-gamma
-NDISC,AR,0,-c:b
-DISC,SR,4,0:0
-DISC,UR,2,beta - c/2:b/2 - gamma
-DISC,UR,14,beta - c:b - gamma
-D,NR,14,0:0
-D,UR,3,beta:-gamma
-C,SR,7,beta - c:b - gamma
-DISC,SR,6,0:0
-C,NR,14,-c:b
-DISC,UR,0,beta:-gamma
-DISC,SR,0,0:0
-C,UR,1,beta - c:b - gamma
-NDISC,AR,2,beta*p + c*(p - 1):-b*p + b - gamma*p
-NDISC,NR,1,c*(p - 1):b*(1 - p)
-DISC,AR,6,-c:b
-D,SR,0,0:0
-C,UR,5,beta - c:b - gamma
-C,UR,6,beta - c:b - gamma
-NDISC,SR,4,beta - c:b - gamma
-DISC,AR,4,-beta*p + beta - c*p:b*p + gamma*(p - 1)
-DISC,UR,8,beta - c*p:b*p - gamma
-D,NR,11,0:0
-C,SR,4,beta - c:b - gamma
-D,UR,10,beta:-gamma
-C,UR,6,beta - c:b - gamma
-D,AR,12,beta:-gamma
-DISC,AR,4,-beta*p + beta - c*p:b*p + gamma*(p - 1)
-NDISC,NR,8,-c:b
-DISC,UR,14,beta - c:b - gamma
-NDISC,UR,5,beta - c:b - gamma
-D,NR,11,0:0
-NDISC,AR,1,-c:b
+DISC,SR,11,beta - c:b - gamma
 C,UR,13,beta - c:b - gamma
-DISC,UR,4,beta:-gamma
-NDISC,SR,5,-(beta - c)*(p - 1):-(b - gamma)*(p - 1)
-DISC,AR,11,beta/2 - c/2:b/2 - gamma/2
-D,AR,4,beta:-gamma
-DISC,SR,6,0:0
-D,NR,1,0:0
-C,UR,9,beta - c:b - gamma
+NDISC,NR,2,-c:b
+NDISC,NR,13,0:0
+C,NR,14,-c:b
+DISC,SR,2,0:0
+DISC,AR,12,-beta*p + beta - c*p:b*p + gamma*(p - 1)
+DISC,NR,11,-c/2:b/2
+NDISC,AR,6,beta:-gamma
+D,UR,1,beta:-gamma
+C,SR,5,beta - c:b - gamma
+D,AR,15,beta:-gamma
+NDISC,SR,10,beta/2 - c/2:b/2 - gamma/2
+D,AR,2,beta:-gamma
+DISC,UR,8,beta - c*p:b*p - gamma
+DISC,SR,15,beta - c:b - gamma
+D,SR,9,0:0
+C,SR,10,beta - c:b - gamma
+D,AR,6,beta:-gamma
+D,NR,13,0:0
+C,NR,14,-c:b
+DISC,UR,2,beta - c/2:b/2 - gamma
+C,UR,7,beta - c:b - gamma
+NDISC,NR,4,-c/2:b/2
+NDISC,SR,3,-(beta - c)*(p - 1):-(b - gamma)*(p - 1)
+NDISC,SR,4,beta - c:b - gamma
+DISC,SR,8,p*(beta - c):p*(b - gamma)
+C,SR,13,beta - c:b - gamma
+NDISC,SR,12,beta/2 - c/2:b/2 - gamma/2
+DISC,AR,6,-c:b
+D,UR,7,beta:-gamma
+C,NR,3,-c:b
+NDISC,AR,8,-c:b
+D,UR,8,beta:-gamma
+D,NR,8,0:0
+DISC,UR,3,beta - c/2:b/2 - gamma
+NDISC,AR,8,-c:b
+C,NR,13,-c:b
+D,UR,15,beta:-gamma
+C,SR,0,beta - c:b - gamma
+NDISC,UR,14,beta:-gamma
+D,SR,8,0:0
+D,UR,2,beta:-gamma
+NDISC,NR,5,0:0
+C,NR,3,-c:b
+DISC,AR,10,beta/2 - c/2:b/2 - gamma/2
 DISC,UR,1,beta:-gamma
-D,SR,15,0:0
-C,AR,12,-c:b
-D,NR,0,0:0
-C,AR,8,-c:b
+D,UR,10,beta:-gamma
+NDISC,NR,3,c*(p - 1):b*(1 - p)
