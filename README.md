@@ -42,6 +42,12 @@ example:
 
 ## C++ project build
 
+### install C++ packages with vcpkg
+
+```
+cat packages.txt | xargs vcpkg install
+```
+
 <!-- TODO: this needs test! -->
 
 It is recommand to use IDE to load the cmake project.

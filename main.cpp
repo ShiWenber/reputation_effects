@@ -39,12 +39,16 @@
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
 
+#include <boost/json.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <indicators/cursor_control.hpp>
 #include <indicators/dynamic_progress.hpp>
 #include <indicators/progress_bar.hpp>
 #include <numeric>
 
 #include "Action.hpp"
+#include "JsonFile.hpp"
 #include "Norm.hpp"
 #include "PayoffMatrix.hpp"
 #include "Player.hpp"
@@ -55,6 +59,7 @@
 using namespace std;
 using namespace indicators;
 using namespace std::chrono;
+using namespace boost;
 
 /**
  * @brief 费米函数，用来计算策略转变概率
@@ -95,22 +100,25 @@ double fermi(double payoff_current, double payoff_new, double s) {
 double getCoopRate(
     const unordered_map<string, set<int>>& strategyName2donorId,
     const unordered_map<string, set<int>>& strategyName2recipientId,
-    const int& population, const unordered_map<string, set<int>>& reputation2Id) {
+    const int& population,
+    const unordered_map<string, set<int>>& reputation2Id) {
   double temp_sum = 0;
   const int& n = population;
   int good_rep_num = reputation2Id.at("1").size();
 
   for (auto& [do_stg_name, donorIdSet] : strategyName2donorId) {
-
     if (do_stg_name == "C") {
       temp_sum += donorIdSet.size() * (n - 1);
     } else if (do_stg_name == "D") {
       // do nothing
     } else if (do_stg_name == "DISC") {
       // 如果好人中有DISC存在，那么乘 good_rep_num - 1 否则 乘 good_rep_num
-      //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘 good_rep_num - 1
-      
-      temp_sum += donorIdSet.size() * good_rep_num; // error, should reduce the number of "DISC" in good_rep_num
+      //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘
+      ///good_rep_num - 1
+
+      temp_sum +=
+          donorIdSet.size() * good_rep_num;  // error, should reduce the number
+                                             // of "DISC" in good_rep_num
     } else if (do_stg_name == "NDISC") {
       // temp_sum += strategyName2donorId.at(do_stg_name).size() * (n - 1);
       temp_sum += donorIdSet.size() * (n - good_rep_num);
@@ -119,11 +127,7 @@ double getCoopRate(
       throw "not support strategy name";
     }
 
-
-
-
     for (auto& [strategyName, recipientIdSet] : strategyName2recipientId) {
-
       for (auto& donorId : donorIdSet) {
         for (auto& recipientId : recipientIdSet) {
           if (donorId != recipientId) {
@@ -131,7 +135,6 @@ double getCoopRate(
           }
         }
       }
-
     }
   }
 
@@ -194,8 +197,8 @@ string printStatistics(
   for (int i = 0; i < population; i++) {
     const Player& donor = donors[i];
     const Player& recipient = recipients[i];
-    key_str = donor.getStrategy().getName() + "-" +
-                    recipient.getStrategy().getName();
+    key_str =
+        donor.getStrategy().getName() + "-" + recipient.getStrategy().getName();
     strategyPair2Num[key_str]++;
 
     if (recipient.getVarValue(REPUTATION_STR) == 1.0) {
@@ -203,8 +206,8 @@ string printStatistics(
     } else if (recipient.getVarValue(REPUTATION_STR) == 0.0) {
       reputation2Id["0"].insert(i);
     } else {
-      cerr << "reputation value error: " << recipient.getVarValue(REPUTATION_STR)
-           << endl;
+      cerr << "reputation value error: "
+           << recipient.getVarValue(REPUTATION_STR) << endl;
       throw "reputation value error";
     }
     assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
@@ -237,8 +240,9 @@ string printStatistics(
   } else {
     for (Strategy donorS : donorStrategies) {
       for (Strategy recipientS : recipientStrategies) {
-        key_str =donorS.getName() + "-" + recipientS.getName();
-        logLine += "," + to_string(strategyPair2Num[key_str] / population_double);
+        key_str = donorS.getName() + "-" + recipientS.getName();
+        logLine +=
+            "," + to_string(strategyPair2Num[key_str] / population_double);
       }
     }
     for (Strategy donorS : donorStrategies) {
@@ -253,9 +257,9 @@ string printStatistics(
     }
 
     logLine += "," + to_string(reputation2Id["1"].size());
-    double coop_rate = getCoopRate(  strategyName2DonorId,
-                                     strategyName2RecipientId,
-                                     population, reputation2Id);
+    double coop_rate =
+        getCoopRate(strategyName2DonorId, strategyName2RecipientId, population,
+                    reputation2Id);
     logLine += "," + to_string(coop_rate);
   }
   return logLine;
@@ -379,7 +383,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
   unsigned seed_probability =
       chrono::system_clock::now().time_since_epoch().count() + 3;
-  mt19937 gen_probability(seed_probability);
+  std::mt19937 gen_probability(seed_probability);
   uniform_real_distribution<double> dis_probability(0, 1);
 
   // record the strategy distribution of the population
@@ -445,19 +449,42 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   //                 0, false);
 
   // log
-  string logDir = "./log/" + normName + "/";
+  string log_dir = "./log";
   // judge if the path exists, if not, create it
-  if (!filesystem::exists(logDir)) {
-    filesystem::create_directory(logDir);
+  if (!filesystem::exists(log_dir)) {
+    filesystem::create_directory(log_dir);
   }
 
-  string logName = "stepNum-" + to_string(stepNum) + "_population-" +
-                   to_string(population) + "_s-" + to_string(s) + "_b-" +
-                   to_string(b) + "_beta-" + to_string(beta) + "_c-" +
-                   to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
-                   to_string(mu) + "_norm-" + normName + "_uStepN-" +
-                   to_string(updateStepNum) + "_p0-" + to_string(p0) + ".csv";
-  auto out = fmt::output_file(logDir + logName);
+  // string logName = "stepNum-" + to_string(stepNum) + "_population-" +
+  //                  to_string(population) + "_s-" + to_string(s) + "_b-" +
+  //                  to_string(b) + "_beta-" + to_string(beta) + "_c-" +
+  //                  to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
+  //                  to_string(mu) + "_norm-" + normName + "_uStepN-" +
+  //                  to_string(updateStepNum) + "_p0-" + to_string(p0) + ".csv";
+
+  const json::value jv =
+  { {"stepNum", stepNum},
+    {"population", population},
+    {"s", s},
+    {"b", b},
+    {"beta", beta},
+    {"c", c},
+    {"gamma", gamma},
+    {"mu", mu},
+    {"normId", normId},
+    {"p0", p0},
+    // not model parameters
+    {"other",
+     {
+         {"updateStepNum", updateStepNum},
+         {"logStep", log_step},
+     }
+    }
+  };
+
+  string log_file_path = logJson(log_dir, jv);
+
+  auto out = fmt::output_file(log_file_path);
   // generate header
   string line = "step";
   for (Strategy donorS : donorStrategies) {
@@ -605,10 +632,11 @@ DEFINE_int32(logStep, 1, "the number of steps to log");
 DEFINE_int32(threads, 11, "the number of threads");
 
 int main(int argc, char** argv) {
-
-gflags::SetUsageMessage("the simulation of the evolution of cooperation based on the static payoff matrix (combined the reputation and norm)");
-gflags::SetVersionString("0.1");
-gflags::ParseCommandLineFlags(&argc, &argv, true);
+  gflags::SetUsageMessage(
+      "the simulation of the evolution of cooperation based on the static "
+      "payoff matrix (combined the reputation and norm)");
+  gflags::SetVersionString("0.1");
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
 
 // judge if NDEBUG is defined. If defined, the assert() will not work
 #ifdef NDEBUG
@@ -618,8 +646,6 @@ gflags::ParseCommandLineFlags(&argc, &argv, true);
 #endif
 
   std::cout << "Current path is " << std::filesystem::current_path() << '\n';
-
-
 
   // record the running time
   system_clock::time_point start = chrono::system_clock::now();
@@ -660,7 +686,8 @@ gflags::ParseCommandLineFlags(&argc, &argv, true);
   // 博弈参数
   // int stepNum = 100000;
   // int population =
-  //     160;  // 由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
+  //     160;  //
+  //     由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
   //           // 4 * 4 的倍数
 
   if (FLAGS_population % 16 != 0) {
@@ -703,7 +730,8 @@ gflags::ParseCommandLineFlags(&argc, &argv, true);
     // });
 
     tbb::parallel_for(0, 16, [&](int normId) {
-      func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta, FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
+      func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
+           FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
            FLAGS_p0, nullptr, false, &bars, true, normId, 2);
     });
   });
