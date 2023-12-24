@@ -721,6 +721,7 @@ int main(int argc, char** argv) {
   // updateStepNum);
 
   // 多线程加速
+  cout << FLAGS_logStep << endl;
 
   arena.execute([&]() {
     // int start = 1000000;
@@ -735,7 +736,7 @@ int main(int argc, char** argv) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
            FLAGS_p0, FLAGS_payoff_matrix_config_name,
-             nullptr, false, &bars, true, normId, 2);
+             nullptr, false, &bars, true, normId, FLAGS_logStep);
     });
   });
 
