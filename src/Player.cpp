@@ -6,11 +6,11 @@
 #include <random>
 #include <sstream>
 
-// 为静态成员初始化一个空的map
+// init static member commonInfo
 std::map<std::string, double> Player::commonInfo =
     std::map<std::string, double>();
 
-//  拷贝构造
+//  copy constructor
 Player::Player(const Player& other)
     : name(other.name),
       score(other.score),
@@ -22,7 +22,7 @@ Player::Player(const Player& other)
       strategies(other.strategies),
       vars(other.vars) {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  this->gen = std::mt19937(seed);  //< 以时间为种子生成随机数
+  this->gen = std::mt19937(seed);  //< generate random numbers with time-based seed
 }
 
 Player::Player(std::string name, int score, std::vector<Action> actions) {
@@ -31,7 +31,7 @@ Player::Player(std::string name, int score, std::vector<Action> actions) {
   this->actions = actions;
   this->actionPossibility = std::vector<double>(actions.size(), 0);
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  this->gen = std::mt19937(seed);  //< 以时间为种子生成随机数
+  this->gen = std::mt19937(seed);  //< generate random numbers with time-based seed
 }
 
 Player::~Player() {}
@@ -59,29 +59,23 @@ Player::~Player() {}
 
 /**
  * @brief
- * 通过输入的声誉返回该轮采取的动作，通过this->strategy选择对应的strategyTable,
- * strategyTable的最后一行为输出，其他行均为输入，并与参数的顺序对应
+ * 
+ * return the action of this round by reputation
+ * by this->strategy, select the corresponding strategyTable,
+ * strategyTable's last row is output, other rows are input, and correspond to the order of the parameters
  *
- * TODO:
- * 可以通过设置变长参数表来实现输入的数量不固定，当前采用的是固定的两个输入:
- * this->strategy, recipientReputation
  * @param recipientReputation
- * @param mu 动作突变率
+ * @param mu The probability of action mutation
  * @return Action
  */
-Action Player::donate(std::string recipientReputation, double mu) {
-  // 从形参构建key
+Action Player::donate(std::string const& recipientReputation, double mu) {
+  // construct key from parameters
   std::string key = this->strategy.getName();
   key += "!" + recipientReputation;
 
-  // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
-  Action resAction = this->strategyFunc[key];
-  if (resAction.getName() == "") {
-    std::cerr << "key: " << key << " not found" << std::endl;
-    throw "action not found";
-  }
+  Action resAction = this->strategyFunc.at(key);
 
-  // mu概率Action突变
+  // Action will mutate with probability mu
   if (this->getProbability() < mu) {
     std::vector<Action> alterActions;
     for (Action action : this->actions) {
@@ -94,17 +88,13 @@ Action Player::donate(std::string recipientReputation, double mu) {
   return resAction;
 }
 
-Action Player::reward(std::string donorActionName, double mu) {
+Action Player::reward(std::string const& donorActionName, double mu) {
   // 从形参构建key
   std::string key = this->strategy.getName();
   key += "!" + donorActionName;
 
   // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
-  Action resAction = this->strategyFunc[key];
-  if (resAction.getName() == "") {
-    std::cerr << "key: " << key << " not found" << std::endl;
-    throw "action not found";
-  }
+  Action resAction = this->strategyFunc.at(key);
 
   // mu概率Action突变
   if (this->getProbability() < mu) {

@@ -3,6 +3,22 @@
  * @author ShiWenber (1210169842@qq.com)
  * @brief the simulation of the evolution of cooperation based on the static
  * payoff matrix (combined the reputation and norm)
+ * 
+ * This is a conventional fermi update evolution model, the payoff matrix is considered under the circumstance of long term
+ * 
+ * cite:
+ * 1. Pal, S., Hilbe, C., 2022. Reputation effects drive the joint evolution of cooperation and social rewarding. Nat. Commun. 13, 5928. https://doi.org/10.1038/s41467-022-33551-y
+ * 2. Guo, H., Song, Z., Geček, S., Li, X., Jusup, M., Perc, M., Moreno, Y., Boccaletti, S., Wang, Z., 2020. A novel route to cyclic dominance in voluntary social dilemmas. Journal of The Royal Society Interface 17, 20190789. https://doi.org/10.1098/rsif.2019.0789
+ * 
+ * but we have a change. To characterize the dynamic of reputation of the recipient, we should make the game actually played after the imitation done.
+ * which means little change of reputation distribution will take place in each step with strategy distribution changed.
+ * 1. Focal player imitated the rolemodel considered that the rolemodel will have a higher payoff than the focal player.
+ * 2. Focal player immediately play the game with a random select neighbor using the new strategy.
+ * 3. The reputation distribution will be updated according to the game result.
+ * 4. During the next step, a new focal player will imitate a new rolemodel under the new reputation distribution.
+ * 
+ * It is should be noted that the reputation distribution's dynamic just influence the players only thinking in short term, instead of the players who have a long term thinking(They only consider the stability of the reputation distribution).
+ * 
  * @version 0.1
  * @date 2023-09-12
  *
@@ -210,8 +226,9 @@ string printStatistics(
            << recipient.getVarValue(REPUTATION_STR) << endl;
       throw "reputation value error";
     }
-    assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
+    
   }
+  assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
 
   string logLine = to_string(step);
 
@@ -336,27 +353,27 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   vector<Action> donorActions;
   donorActions.push_back(Action("C", 0));
   donorActions.push_back(Action("D", 1));
-  Player donor("donor", 0, donorActions);
+  Player donor_temp("donor", 0, donorActions);
   vector<Strategy> donorStrategies = payoffMatrix.getRowStrategies();
-  donor.setStrategies(donorStrategies);
-  donor.loadStrategy("./strategy");
-  // fmt::print("donorStrategies: {}\n", donor.getStrategyTables());
-  donor.setStrategy("C");
+  donor_temp.setStrategies(donorStrategies);
+  donor_temp.loadStrategy("./strategy");
+  // fmt::print("donorStrategies: {}\n", donor_temp.getStrategyTables());
+  donor_temp.setStrategy("C");
 
   vector<Action> recipientActions;
   recipientActions.push_back(Action("C", 0));
   recipientActions.push_back(Action("D", 1));
-  Player recipient("recipient", 0, recipientActions);
+  Player recipient_temp("recipient", 0, recipientActions);
   vector<Strategy> recipientStrategies = payoffMatrix.getColStrategies();
-  recipient.setStrategies(recipientStrategies);
+  recipient_temp.setStrategies(recipientStrategies);
 
-  recipient.loadStrategy("./strategy");
-  // fmt::print("recipientStrategies: {}\n", recipient.getStrategyTables());
-  recipient.setStrategy("NR");
+  recipient_temp.loadStrategy("./strategy");
+  // fmt::print("recipientStrategies: {}\n", recipient_temp.getStrategyTables());
+  recipient_temp.setStrategy("NR");
 
-  // initialize recipient's reputation
-  recipient.addVar(REPUTATION_STR, 1);
-  // fmt::print("recipient vars: {}\n", recipient.getVars());
+  // initialize recipient_temp's reputation
+  recipient_temp.addVar(REPUTATION_STR, 1);
+  // fmt::print("recipient_temp vars: {}\n", recipient_temp.getVars());
 
   // load norm
   string normPath = "./norm/" + normName + ".csv";
@@ -425,8 +442,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   // initialize population players that have different strategies, and each
   // strategy has the same number of players
   for (int i = 0; i < population; i++) {
-    Player temp_donor(donor);
-    Player temp_recipient(recipient);
+    Player temp_donor(donor_temp);
+    Player temp_recipient(recipient_temp);
     // int donor_stra_i = donor_stra_id[i];
     // int recipient_stra_i = recipient_stra_id[i];
     auto [donor_stra_i, recipient_stra_i] = stra_id_pairs[i];
@@ -437,7 +454,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
     temp_recipient.setStrategy(recipientStrategies[recipient_stra_i]);
     temp_recipient.updateVar(REPUTATION_STR, reputation_value[i]);
-    // // 固定声誉为1
+
+    // // fixed reputation to 1
     // temp_recipient.updateVar(REPUTATION_STR, 1);
 
     strategyName2RecipientId[temp_recipient.getStrategy().getName()].insert(i);
@@ -530,11 +548,11 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     // string>> recipientId2StrateChange;
 
     // The random number of 0-population is extracted
-    int focul_i = dis(gen_don);
+    int focal_i = dis(gen_don);
     int rolemodel_i = dis(gen_rec);
     // to prevent the same person from being drawn
-    while (focul_i == rolemodel_i) {
-      focul_i = dis(gen_don);
+    while (focal_i == rolemodel_i) {
+      focal_i = dis(gen_don);
       rolemodel_i = dis(gen_rec);
     }
 
@@ -547,32 +565,32 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       int randId_d = 0;
       int randId_r = 0;
       do {
-        randId_d = donors[focul_i].getRandomInt(0, donorStrategies.size() - 1);
+        randId_d = donors[focal_i].getRandomInt(0, donorStrategies.size() - 1);
         randId_r =
-            recipients[focul_i].getRandomInt(0, recipientStrategies.size() - 1);
-      } while (randId_d == donors[focul_i].getStrategy().getId() &&
-               randId_r == recipients[focul_i].getStrategy().getId());
+            recipients[focal_i].getRandomInt(0, recipientStrategies.size() - 1);
+      } while (randId_d == donors[focal_i].getStrategy().getId() &&
+               randId_r == recipients[focal_i].getStrategy().getId());
 
       //   // record the strategy change of the population to update
-      //   distribution after the step ends donor2StrateChange[focul_i] =
-      //       make_pair(donors[focul_i].getStrategy().getName(),
+      //   distribution after the step ends donor2StrateChange[focal_i] =
+      //       make_pair(donors[focal_i].getStrategy().getName(),
       //                 donorStrategies[randId].getName());
 
-      strategyName2DonorId[donors[focul_i].getStrategy().getName()].erase(
-          focul_i);
-      donors[focul_i].setStrategy(donorStrategies[randId_d]);
-      strategyName2DonorId[donorStrategies[randId_d].getName()].insert(focul_i);
+      strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
+          focal_i);
+      donors[focal_i].setStrategy(donorStrategies[randId_d]);
+      strategyName2DonorId[donorStrategies[randId_d].getName()].insert(focal_i);
 
       //   // record the strategy change of the population to update
       //   distribution after the step ends
       //   recipientId2StrateChange[rolemodel_i] =
       //       make_pair(recipients[rolemodel_i].getStrategy().getName(),
       //                 recipientStrategies[randId].getName());
-      strategyName2RecipientId[recipients[focul_i].getStrategy().getName()]
-          .erase(focul_i);
-      recipients[focul_i].setStrategy(recipientStrategies[randId_r]);
+      strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
+          .erase(focal_i);
+      recipients[focal_i].setStrategy(recipientStrategies[randId_r]);
       strategyName2RecipientId[recipientStrategies[randId_r].getName()].insert(
-          focul_i);
+          focal_i);
     } else {
       Strategy rolemodel_donorStrategy = donors[rolemodel_i].getStrategy();
       Strategy rolemodel_recipientStrategy =
@@ -581,8 +599,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
           rolemodel_donorStrategy, rolemodel_recipientStrategy, payoffMatrix,
           strategyName2DonorId, strategyName2RecipientId, population);
 
-      Strategy focul_donorStrategy = donors[focul_i].getStrategy();
-      Strategy focul_recipientStrategy = recipients[focul_i].getStrategy();
+      Strategy focul_donorStrategy = donors[focal_i].getStrategy();
+      Strategy focul_recipientStrategy = recipients[focal_i].getStrategy();
       double focul_payoff = getAvgPayoff(
           focul_donorStrategy, focul_recipientStrategy, payoffMatrix,
           strategyName2DonorId, strategyName2RecipientId, population);
@@ -590,18 +608,45 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       // fermi
       if (dis_probability(gen_probability) <
           fermi(focul_payoff, rolemodel_payoff, s)) {
-        strategyName2DonorId[donors[focul_i].getStrategy().getName()].erase(
-            focul_i);
-        donors[focul_i].setStrategy(rolemodel_donorStrategy);
-        strategyName2DonorId[rolemodel_donorStrategy.getName()].insert(focul_i);
+        strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
+            focal_i);
+        donors[focal_i].setStrategy(rolemodel_donorStrategy);
+        strategyName2DonorId[rolemodel_donorStrategy.getName()].insert(focal_i);
 
-        strategyName2RecipientId[recipients[focul_i].getStrategy().getName()]
-            .erase(focul_i);
-        recipients[focul_i].setStrategy(rolemodel_recipientStrategy);
+        strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
+            .erase(focal_i);
+        recipients[focal_i].setStrategy(rolemodel_recipientStrategy);
         strategyName2RecipientId[rolemodel_recipientStrategy.getName()].insert(
-            focul_i);
+            focal_i);
       }
     }
+
+    // focal player play the game with a random select neighbor k using the new strategy
+    int k = dis(gen_don);
+    while (k == focal_i) {
+      k = dis(gen_don);
+    }
+
+    // The position in the game is randomly selected between focal_i and k
+    // 1. focal_i as donor and k as recipient
+    // 2. k as donor and focal_i as recipient
+    double random_p = dis_probability(gen_probability);
+    assert(random_p >= 0 && random_p <= 1);
+    Player* donor;
+    Player* recipient;
+    if (random_p > 0.5) {
+      donor = &donors[focal_i];
+      recipient = &recipients[k];
+    } else {
+      donor = &donors[k];
+      recipient = &recipients[focal_i];
+    }
+
+    double reputation = recipient->getVarValue(REPUTATION_STR);
+    Action donor_action = donor->donate(to_string((int) reputation), mu);
+    Action recipient_action = recipient->reward(donor_action.getName(), mu);
+    double new_reputation = norm.getReputation(donor_action, recipient_action);
+    recipient->updateVar(REPUTATION_STR, new_reputation);
 
     if (step % log_step == 0) {
       // 生成log
@@ -731,11 +776,11 @@ int main(int argc, char** argv) {
     //        p0, nullptr, false, &bars, true, stepNum - start);
     // });
 
-    tbb::parallel_for(0, 16, [&](int normId) {
+    tbb::parallel_for(10, 11, [&](int normId) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
            FLAGS_p0, FLAGS_payoff_matrix_config_name,
-             nullptr, false, &bars, true, normId, 2);
+             nullptr, false, &bars, true, normId, FLAGS_logStep);
     });
   });
 

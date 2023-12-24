@@ -68,7 +68,9 @@
         "thread": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "source_location": "cpp",
+        "variant": "cpp"
     },
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE": "/home/shiwenbo/git/vcpkg/scripts/buildsystems/vcpkg.cmake",
