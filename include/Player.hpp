@@ -49,9 +49,9 @@ class Player {
   Action play();
 
   /** 根据输入返回一个动作，需要strategyTables */
-  Action donate(std::string recipientReputation, double mu = 0);
+  Action donate(std::string const& recipientReputation, double mu = 0);
 
-  Action reward(std::string donorActionName, double mu = 0);
+  Action reward(std::string const& donorActionName, double mu = 0);
 
   /**根据查询到的收益的delta值，更新分数*/
   void updateScore(double delta) {
@@ -128,15 +128,12 @@ class Player {
     }
     this->vars[varName] = std::stod(varValue);
   }
+
   double getVarValue(const std::string &varName) const {
-    if (!existVar(varName)) {
-      std::cerr << "not exist var: " << varName << std::endl;
-      throw "not exist var: " + varName;
-    }
     return this->vars.at(varName);
   }
+
   bool existVar(const std::string &varName) const {
-    // 判断是否存在该var
     int existed = 0;
     for (auto var : this->vars) {
       if (var.first == varName) {
