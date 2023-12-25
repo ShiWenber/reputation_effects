@@ -63,15 +63,21 @@ void Norm::loadNormFunc(std::string csvPath) {
   }
 }
 
-double Norm::getReputation(Action const& donorAction, Action const& recipientAction) const {
-  std::string key = "!" + donorAction.getName() + "!" + recipientAction.getName();
+double Norm::getReputation(Action const& donorAction, Action const& recipientAction,
+                           double const reputation_error_p) const {
+  std::string key =
+      "!" + donorAction.getName() + "!" + recipientAction.getName();
   double res = this->normFunc.at(key);
-  if (res == 0.0) {
-    // judge whether this->normFunc has key
-    if (this->normFunc.find(key) == this->normFunc.end()) {
-      // if the key is not found, throw the exception
-      std::cerr << "normFunc not found key: " << key << std::endl;
-      throw "normFunc not found key: " + key;
+
+  double p = static_cast<double>(rand()) / RAND_MAX;
+  if (p < reputation_error_p) {
+    if (res == 1.0) {
+      res = 0.0;
+    } else if (res == 0.0) {
+      res = 1.0;
+    } else {
+      std::cerr << "wrong reputation value: " << res << std::endl;
+      throw "wrong reputation value: " + std::to_string(res);
     }
   }
 

@@ -65,18 +65,18 @@ Player::~Player() {}
  * strategyTable's last row is output, other rows are input, and correspond to the order of the parameters
  *
  * @param recipientReputation
- * @param mu The probability of action mutation
+ * @param action_error_p The probability of action mutation
  * @return Action
  */
-Action Player::donate(std::string const& recipientReputation, double mu) {
+Action Player::donate(std::string const& recipientReputation, double action_error_p) {
   // construct key from parameters
   std::string key = this->strategy.getName();
   key += "!" + recipientReputation;
 
   Action resAction = this->strategyFunc.at(key);
 
-  // Action will mutate with probability mu
-  if (this->getProbability() < mu) {
+  // Action will mutate with probability action_error_p
+  if (this->getProbability() < action_error_p) {
     std::vector<Action> alterActions;
     for (Action action : this->actions) {
       if (action.getName() != resAction.getName()) {
@@ -88,7 +88,7 @@ Action Player::donate(std::string const& recipientReputation, double mu) {
   return resAction;
 }
 
-Action Player::reward(std::string const& donorActionName, double mu) {
+Action Player::reward(std::string const& donorActionName, double action_error_p) {
   // 从形参构建key
   std::string key = this->strategy.getName();
   key += "!" + donorActionName;
@@ -97,7 +97,7 @@ Action Player::reward(std::string const& donorActionName, double mu) {
   Action resAction = this->strategyFunc.at(key);
 
   // mu概率Action突变
-  if (this->getProbability() < mu) {
+  if (this->getProbability() < action_error_p) {
     std::vector<Action> alterActions;
     for (Action action : this->actions) {
       if (action.getName() != resAction.getName()) {

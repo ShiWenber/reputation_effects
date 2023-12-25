@@ -294,23 +294,28 @@ string printStatistics(
   return logLine;
 }
 
+
 /**
- * @brief 须输入参数案例
- *   // 博弈参数
- * int stepNum = 1000;
- * int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
- * double s = 1;          // 费米函数参数
- *
- * int b = 4;      // 公共参数
- * int beta = 3;   // 公共参数
- * int c = 1;      // 公共参数
- * int gamma = 1;  // 公共参数
- * int mu = 0.05;  // 动作突变率
- * int normId = 10;
- *
- *
- *
- * @return int
+ * @brief evolution process
+ * 
+ * @param stepNum 
+ * @param population 
+ * @param s 
+ * @param b 
+ * @param beta 
+ * @param c 
+ * @param gamma 
+ * @param mu 
+ * @param normId 
+ * @param updateStepNum 
+ * @param p0 
+ * @param payoff_matrix_config_name 
+ * @param bar 
+ * @param turn_up_progress_bar 
+ * @param dynamic_bar 
+ * @param turn_up_dynamic_bar 
+ * @param dynamic_bar_id 
+ * @param log_step 
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
           int gamma, double mu, int normId, int updateStepNum, double p0, string payoff_matrix_config_name,
@@ -318,27 +323,11 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
           int log_step = 1) {
-  // // Hide cursor
-  // show_console_cursor(false);
-
-  // indicators::ProgressBar bar{
-  //     option::BarWidth{50}, option::Start{" ["}, option::Fill{"*"},
-  //     option::Lead{"*"}, option::Remainder{"-"}, option::End{"]"},
-  //     option::PrefixText{"Progress: "},
-  //     // option::ForegroundColor{Color::yellow},
-  //     option::ShowElapsedTime{true}, option::ShowRemainingTime{true},
-  //     option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}};
 
   string normName = "norm" + to_string(normId);
 
-  // 加载payoffMatrix
-  // cout << "---------->>" << endl;
   PayoffMatrix payoffMatrix("./payoffMatrix/" + payoff_matrix_config_name + "/" + "PayoffMatrix" + to_string(normId) +
                             ".csv");
-  // fmt::print("payoffMatrix_g: {}\n", payoffMatrix_g.getPayoffMatrixStr());
-  // // 输出需要赋值的所有变量
-  // fmt::print("vars: {}\n", payoffMatrix_g.getVars());
-  // cout << "after assign:" << endl;
 
   // assign vars
   payoffMatrix.updateVar("b", b);
@@ -348,18 +337,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   payoffMatrix.updateVar("p", p0);
 
   payoffMatrix.evalPayoffMatrix();
-
-  // cout << "after eval:" << endl;
-  // for (int r = 0; r < payoffMatrix_g.getRowNum(); r++) {
-  //   for (int c = 0; c < payoffMatrix_g.getColNum(); c++) {
-  //     for (int p = 0; p < payoffMatrix_g.getPlayerNum(); p++) {
-  //       cout << payoffMatrix_g.getPayoffMatrix()[r][c][p] << ",";
-  //     }
-  //     cout << "\t";
-  //   }
-  //   cout << endl;
-  // }
-  // cout << "---------<<" << endl;
 
   // initialize two players
   vector<Action> donorActions;
@@ -459,8 +436,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   for (int i = 0; i < population; i++) {
     Player temp_donor(donor_temp);
     Player temp_recipient(recipient_temp);
-    // int donor_stra_i = donor_stra_id[i];
-    // int recipient_stra_i = recipient_stra_id[i];
+
     auto [donor_stra_i, recipient_stra_i] = stra_id_pairs[i];
 
     temp_donor.setStrategy(donorStrategies[donor_stra_i]);
@@ -470,16 +446,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     temp_recipient.setStrategy(recipientStrategies[recipient_stra_i]);
     temp_recipient.updateVar(REPUTATION_STR, reputation_value[i]);
 
-    // // fixed reputation to 1
-    // temp_recipient.updateVar(REPUTATION_STR, 1);
-
     strategyName2RecipientId[temp_recipient.getStrategy().getName()].insert(i);
     recipients.push_back(temp_recipient);
   }
-
-  // printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-  //                 strategyName2DonorId, strategyName2RecipientId, population,
-  //                 0, false);
 
   // log
   string log_dir = "./log";
@@ -487,13 +456,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   if (!filesystem::exists(log_dir)) {
     filesystem::create_directory(log_dir);
   }
-
-  // string logName = "stepNum-" + to_string(stepNum) + "_population-" +
-  //                  to_string(population) + "_s-" + to_string(s) + "_b-" +
-  //                  to_string(b) + "_beta-" + to_string(beta) + "_c-" +
-  //                  to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
-  //                  to_string(mu) + "_norm-" + normName + "_uStepN-" +
-  //                  to_string(updateStepNum) + "_p0-" + to_string(p0) + ".csv";
 
   const json::value jv =
   { {"stepNum", stepNum},
@@ -546,7 +508,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     // update progress bar
     if (turn_up_progress_bar) {
       // (*bar).set_progress((double)step / stepNum * 100);
-      // 只在进度条每增加1%时更新一次
       // only update once when the progress bar increases by 1%
       if (step % (stepNum / 100) == 0) {
         (*bar).tick();
@@ -591,21 +552,11 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       } while (randId_d == donors[focal_i].getStrategy().getId() &&
                randId_r == recipients[focal_i].getStrategy().getId());
 
-      //   // record the strategy change of the population to update
-      //   distribution after the step ends donor2StrateChange[focal_i] =
-      //       make_pair(donors[focal_i].getStrategy().getName(),
-      //                 donorStrategies[randId].getName());
-
       strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
           focal_i);
       donors[focal_i].setStrategy(donorStrategies[randId_d]);
       strategyName2DonorId[donorStrategies[randId_d].getName()].insert(focal_i);
 
-      //   // record the strategy change of the population to update
-      //   distribution after the step ends
-      //   recipientId2StrateChange[rolemodel_i] =
-      //       make_pair(recipients[rolemodel_i].getStrategy().getName(),
-      //                 recipientStrategies[randId].getName());
       strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
           .erase(focal_i);
       recipients[focal_i].setStrategy(recipientStrategies[randId_r]);
@@ -663,9 +614,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     }
 
     double reputation = recipient->getVarValue(REPUTATION_STR);
-    Action donor_action = donor->donate(to_string(static_cast<int> (reputation)));
-    Action recipient_action = recipient->reward(donor_action.getName());
-    double new_reputation = norm.getReputation(donor_action, recipient_action);
+    Action donor_action = donor->donate(to_string((int) reputation), 0.0);
+    Action recipient_action = recipient->reward(donor_action.getName(), 0.0);
+    double new_reputation = norm.getReputation(donor_action, recipient_action, 0.0);
     recipient->updateVar(REPUTATION_STR, new_reputation);
     if (reputation != new_reputation) {
       if (reputation == 0.0)
@@ -690,10 +641,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                                 false, good_rep_num));
     }
   }
-
-  // printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-  //                 strategyName2DonorId, strategyName2RecipientId, population,
-  //                 stepNum, false);
+  
 }
 
 DEFINE_int32(stepNum, 1000, "the number of steps");
@@ -736,9 +684,7 @@ int main(int argc, char** argv) {
   }
   tbb::task_arena arena(FLAGS_threads);
 
-  // // 硬编码16条进度条 TODO: 由于progressbar 采用单例模式，无法用vector管理
-  // dynamicprogressbar可以加入变长的progressbar引用
-  // 可以尝试用宏来帮助快速构建多个进度条
+  // the macro can help to create multiple progress bars quickly
   CREATE_BAR(0);
   CREATE_BAR(1);
   CREATE_BAR(2);
@@ -747,10 +693,6 @@ int main(int argc, char** argv) {
   CREATE_BAR(5);
   CREATE_BAR(6);
   CREATE_BAR(7);
-
-  // DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
-  //                                   bar7);
-
   CREATE_BAR(8);
   CREATE_BAR(9);
   CREATE_BAR(10);
@@ -763,34 +705,15 @@ int main(int argc, char** argv) {
                                     bar7, bar8, bar9, bar10, bar11, bar12,
                                     bar13, bar14, bar15);
 
-  // 博弈参数
-  // int stepNum = 100000;
-  // int population =
-  //     160;  //
-  //     由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
-  //           // 4 * 4 的倍数
-
+  // Because the same number of strategy pairs is set during initialization, population must be a multiple of 16 (4 * 4)
   if (FLAGS_population % 16 != 0) {
     cerr << "population must be a multiple of 16" << endl;
     return 0;
   }
 
-  // double s = 1;  // 费米函数参数
-
-  // int b = 4;      // 公共参数
-  // int beta = 3;   // 公共参数
-  // int c = 1;      // 公共参数
-  // int gamma = 1;  // 公共参数
-  // // double mu = 0.05;  // 动作突变率
-  // double mu = 0.1;
-  // int normId = 10;  // 均衡为 d-nr
-  // double p0 = 1;
-  // // int normId = 9;
-  // int updateStepNum = 1;  // 表示每隔多少步更新一次策略
-
   show_console_cursor(false);
 
-  // // 调试使用
+  // // for debug
   // CREATE_BAR(100);
   // ProgressBar *bar100_ptr = &bar100;
   // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
@@ -798,9 +721,7 @@ int main(int argc, char** argv) {
   // // func(stepNum, population, s, b, beta, c, gamma, mu, normId,
   // updateStepNum);
 
-  // 多线程加速
-  cout << FLAGS_logStep << endl;
-
+  // multithread
   arena.execute([&]() {
     // int start = 1000000;
     // int end = 1000012;

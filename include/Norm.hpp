@@ -17,7 +17,7 @@ public:
     ~Norm();
     void loadNormFunc(std::string csvPath);
     std::vector<std::vector<std::string>> getNormTableStr() const { return this->normTableStr; }
-    double getReputation(Action const& donorAction, Action const& recipientAction) const;
+    double getReputation(Action const& donorAction, Action const& recipientAction, double const reputation_error_p=0.0) const;
 
 };
 
