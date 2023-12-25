@@ -74,6 +74,9 @@ Action Player::donate(std::string const& recipientReputation, double action_erro
   key += "!" + recipientReputation;
 
   Action resAction = this->strategyFunc.at(key);
+  if (action_error_p == 0.0) {
+    return resAction;
+  }
 
   // Action will mutate with probability action_error_p
   if (this->getProbability() < action_error_p) {
@@ -95,6 +98,10 @@ Action Player::reward(std::string const& donorActionName, double action_error_p)
 
   // 判断是否索引到了输出action，如果key没有对应的value，则抛出异常
   Action resAction = this->strategyFunc.at(key);
+
+  if (action_error_p == 0.0) {
+    return resAction;
+  }
 
   // mu概率Action突变
   if (this->getProbability() < action_error_p) {

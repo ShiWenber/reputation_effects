@@ -3,10 +3,21 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <chrono>
 
 Norm::Norm() {}
 
-Norm::Norm(std::string csvPath) { this->loadNormFunc(csvPath); }
+Norm::Norm(std::string csvPath) {
+  this->loadNormFunc(csvPath);
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  this->gen = std::mt19937(seed);  //< generate random numbers with time-based seed
+}
+
+double Norm::getProbability() {
+  std::uniform_real_distribution<double> randomDis(0, 1);
+  double randDouble = randomDis(this->gen);
+  return randDouble;
+}
 
 Norm::~Norm() {}
 
@@ -63,14 +74,19 @@ void Norm::loadNormFunc(std::string csvPath) {
   }
 }
 
-double Norm::getReputation(Action const& donorAction, Action const& recipientAction,
-                           double const reputation_error_p) const {
+double Norm::getReputation(Action const& donorAction,
+                           Action const& recipientAction,
+                           double const reputation_error_p) {
   std::string key =
       "!" + donorAction.getName() + "!" + recipientAction.getName();
   double res = this->normFunc.at(key);
+  
+  if (reputation_error_p == 0.0) {
+    return res;
+  }
 
-  double p = static_cast<double>(rand()) / RAND_MAX;
-  if (p < reputation_error_p) {
+  
+  if (this->getProbability() < reputation_error_p) {
     if (res == 1.0) {
       res = 0.0;
     } else if (res == 0.0) {

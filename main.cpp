@@ -698,7 +698,7 @@ int main(int argc, char** argv) {
     //        p0, nullptr, false, &bars, true, stepNum - start);
     // });
 
-    tbb::parallel_for(10, 11, [&](int normId) {
+    tbb::parallel_for(0, 16, [&](int normId) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
            FLAGS_p0, FLAGS_payoff_matrix_config_name,
