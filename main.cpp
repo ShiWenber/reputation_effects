@@ -343,7 +343,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   donorActions.push_back(Action("C", 0));
   donorActions.push_back(Action("D", 1));
   // Player donor_temp("donor", 0, donorActions);
-  Player donor_temp("donor", 0, donorActions, epsilon);
+  Player donor_temp("donor", 0, donorActions);
   vector<Strategy> donorStrategies = payoffMatrix.getRowStrategies();
   donor_temp.setStrategies(donorStrategies);
   donor_temp.loadStrategy("./strategy");
