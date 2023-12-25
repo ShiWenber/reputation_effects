@@ -1,0 +1,5 @@
+Donor Recipient:beta c gamma b,NR,SR,AR,UR
+C,-c:b,beta - c:b - gamma,-c:b,beta - c:b - gamma
+DISC,-c:b,beta - c:b - gamma,-c:b,beta - c:b - gamma
+NDISC,0:0,0:0,beta:-gamma,beta:-gamma
+D,0:0,0:0,beta:-gamma,beta:-gamma
