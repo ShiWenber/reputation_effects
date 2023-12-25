@@ -174,7 +174,8 @@ std::vector<double> PayoffMatrix::getPayoff(const Strategy& strategyA,const Stra
 }
 
 /**
- * @brief 将PayoffMatrixStr中的表达式计算出值，赋值给PayoffMatrix
+ * @brief 
+ * eval the expression in payoffMatrixStr and assign the value to payoffMatrix
  *
  * @return std::vector<std::vector<std::vector<double>>>
  */

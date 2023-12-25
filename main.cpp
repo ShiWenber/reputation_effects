@@ -157,6 +157,17 @@ double getCoopRate(
   return temp_sum / (n * (n - 1));
 }
 
+/**
+ * @brief Get the Avg Payoff object
+ * 
+ * @param donorStrategy 
+ * @param recipientStrategy 
+ * @param payoffMatrix 
+ * @param strategyName2donorId 
+ * @param strategyName2recipientId 
+ * @param population 
+ * @return double 
+ */
 double getAvgPayoff(
     const Strategy& donorStrategy, const Strategy& recipientStrategy,
     const PayoffMatrix& payoffMatrix,
@@ -204,8 +215,8 @@ string printStatistics(
     const vector<Strategy>& recipientStrategies,
     const unordered_map<string, set<int>>& strategyName2DonorId,
     const unordered_map<string, set<int>>& strategyName2RecipientId,
-    int population, int step, bool print) {
-  double population_double = (double)population;
+    int population, int step, bool print, int good_rep_num) {
+  double population_double = static_cast<double>(population);
   // unordered_map<string, int> strategyPair2Num;
   unordered_map<string, int> strategyPair2Num;
   string key_str;
@@ -228,6 +239,7 @@ string printStatistics(
     }
     
   }
+  assert(reputation2Id["1"].size() == good_rep_num);
   assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
 
   string logLine = to_string(step);
@@ -273,7 +285,7 @@ string printStatistics(
                                  population_double);
     }
 
-    logLine += "," + to_string(reputation2Id["1"].size());
+    logLine += "," + to_string(reputation2Id["1"].size()/ population_double);
     double coop_rate =
         getCoopRate(strategyName2DonorId, strategyName2RecipientId, population,
                     reputation2Id);
@@ -353,7 +365,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   vector<Action> donorActions;
   donorActions.push_back(Action("C", 0));
   donorActions.push_back(Action("D", 1));
-  Player donor_temp("donor", 0, donorActions);
+  // Player donor_temp("donor", 0, donorActions);
+  Player donor_temp("donor", 0, donorActions, epsilon);
   vector<Strategy> donorStrategies = payoffMatrix.getRowStrategies();
   donor_temp.setStrategies(donorStrategies);
   donor_temp.loadStrategy("./strategy");
@@ -410,8 +423,10 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   assert(population % donorStrategies.size() == 0);
 
   // reputation init vector
-  vector<int> reputation_value(ceil(population * (1 - p0)), 0);
-  vector<int> good_rep_value((int)population * p0, 1);
+  int good_rep_num = static_cast<int>(population * p0);
+  int bad_rep_num = population - good_rep_num;
+  vector<int> reputation_value(bad_rep_num, 0);
+  vector<int> good_rep_value(good_rep_num, 1);
   assert(reputation_value.size() + good_rep_value.size() == population);
 
   reputation_value.insert(reputation_value.end(), good_rep_value.begin(),
@@ -423,11 +438,11 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   vector<int> recipient_stra_id;
   for (int i = 0; i < donorStrategies.size(); i++) {
     donor_stra_id.insert(donor_stra_id.end(),
-                         population / (double)donorStrategies.size(), i);
+                         population / static_cast<double>(donorStrategies.size()), i);
     for (int j = 0; j < recipientStrategies.size(); j++) {
       recipient_stra_id.insert(recipient_stra_id.end(),
-                               (population / (double)donorStrategies.size()) /
-                                   (double)recipientStrategies.size(),
+                               (population / static_cast<double>(donorStrategies.size())) /
+                                   static_cast<double>(recipientStrategies.size()),
                                j);
     }
   }
@@ -517,13 +532,13 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   for (Strategy recipientS : recipientStrategies) {
     line += "," + recipientS.getName();
   }
-  line += ",good_rep_num,cr";
+  line += ",good_rep,cr";
 
   out.print("{}\n", line);
 
   string logLine = printStatistics(
       donors, recipients, donorStrategies, recipientStrategies,
-      strategyName2DonorId, strategyName2RecipientId, population, 0, false);
+      strategyName2DonorId, strategyName2RecipientId, population, 0, false, good_rep_num);
   out.print("{}\n", logLine);
 
   uniform_int_distribution<int> dis(0, population - 1);
@@ -550,10 +565,15 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     // The random number of 0-population is extracted
     int focal_i = dis(gen_don);
     int rolemodel_i = dis(gen_rec);
-    // to prevent the same person from being drawn
+    // to prevent the same person from being  drawn
     while (focal_i == rolemodel_i) {
       focal_i = dis(gen_don);
       rolemodel_i = dis(gen_rec);
+    }
+    // if payoff_matrix_config_name == "payoffMatrix_shortterm", then eval the whole payoffMatrix according to the current reputation distribution
+    if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
+      payoffMatrix.updateVar("p", static_cast<double>(good_rep_num) / population);
+      payoffMatrix.evalPayoffMatrix();
     }
 
     // mutation probability to explore other strategies randomly
@@ -643,10 +663,23 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     }
 
     double reputation = recipient->getVarValue(REPUTATION_STR);
-    Action donor_action = donor->donate(to_string((int) reputation), mu);
-    Action recipient_action = recipient->reward(donor_action.getName(), mu);
+    Action donor_action = donor->donate(to_string(static_cast<int> (reputation)));
+    Action recipient_action = recipient->reward(donor_action.getName());
     double new_reputation = norm.getReputation(donor_action, recipient_action);
     recipient->updateVar(REPUTATION_STR, new_reputation);
+    if (reputation != new_reputation) {
+      if (reputation == 0.0)
+      {
+      // good -> bad
+        good_rep_num++;
+      } else if (reputation == 1.0) {
+      // bad -> good
+        good_rep_num--;
+      } else {
+        cerr << "reputation value error: " << reputation << endl;
+        throw "reputation value error";
+      }
+    }
 
     if (step % log_step == 0) {
       // 生成log
@@ -654,7 +687,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                 printStatistics(donors, recipients, donorStrategies,
                                 recipientStrategies, strategyName2DonorId,
                                 strategyName2RecipientId, population, step + 1,
-                                false));
+                                false, good_rep_num));
     }
   }
 
@@ -670,7 +703,7 @@ DEFINE_int32(b, 4, "the parameter of payoff matrix");
 DEFINE_int32(beta, 3, "the parameter of payoff matrix");
 DEFINE_int32(c, 1, "the parameter of payoff matrix");
 DEFINE_int32(gamma, 1, "the parameter of payoff matrix");
-DEFINE_double(mu, 0.05, "the probability of mutation");
+DEFINE_double(mu, 0.0001, "the probability of mutation");
 // DEFINE_int32(normId, 10, "the id of norm");
 DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
 DEFINE_double(p0, 1, "the probability of good reputation");
@@ -777,7 +810,7 @@ int main(int argc, char** argv) {
     //        p0, nullptr, false, &bars, true, stepNum - start);
     // });
 
-    tbb::parallel_for(10, 11, [&](int normId) {
+    tbb::parallel_for(0, 16, [&](int normId) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
            FLAGS_p0, FLAGS_payoff_matrix_config_name,
