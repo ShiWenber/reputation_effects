@@ -112,34 +112,6 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
     }
   }
 
-  // // 输出动作集
-  // std::cout << "stra: \t|";
-  // // std::cout << "\t|";
-  // for (Strategy strategy : this->strategies) {
-  //   std::cout << strategy.getName() << "\t|";
-  // }
-
-  // std::cout << std::endl;
-  // for (int i = 0; i < this->strategies.size() + 1; i++) {
-  //   std::cout << "--------";
-  // }
-  // std::cout << std::endl;
-
-  // // 输出收益矩阵
-  // for (int r = 0; r < this->payoffMatrixStr.size(); r++) {
-  //   for (int c = 0; c < this->payoffMatrixStr[r].size() + 1; c++) {
-  //     if (c == 0) {
-  //       std::cout << this->strategies[r].getName() << "\t|";
-  //     } else {
-  //       for (int p = 0; p < this->payoffMatrixStr[r][c - 1].size(); p++) {
-  //         std::cout << this->payoffMatrixStr[r][c - 1][p] << " ";
-  //       }
-  //       std::cout << "\t|";
-  //     }
-  //   }
-  //   std::cout << std::endl;
-  // }
-
   this->colNum = colNum;
   this->rowNum = rowNum;
   this->playerNum = playerNum;
@@ -165,7 +137,7 @@ std::vector<double> PayoffMatrix::getPayoff(const Strategy& strategyA,const Stra
   assert(std::find(this->colStrategies.begin(), this->colStrategies.end(), strategyB) != this->colStrategies.end());
   int idA = strategyA.getId();
   int idB = strategyB.getId();
-  if (idA < this->colStrategies.size() && idB < this->colStrategies.size()) {
+  if (idA < this->rowStrategies.size() && idB < this->colStrategies.size()) {
     return this->payoffMatrix[idA][idB];
   } else {
     std::cerr << "strategy id not found" << std::endl;

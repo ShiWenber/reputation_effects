@@ -49,9 +49,9 @@ class Player {
   Action play();
 
   /** 根据输入返回一个动作，需要strategyTables */
-  Action donate(std::string const& recipientReputation, double mu = 0);
+  Action donate(std::string const& recipientReputation, double action_error_p = 0);
 
-  Action reward(std::string const& donorActionName, double mu = 0);
+  Action reward(std::string const& donorActionName, double action_error_p = 0);
 
   /**根据查询到的收益的delta值，更新分数*/
   void updateScore(double delta) {
