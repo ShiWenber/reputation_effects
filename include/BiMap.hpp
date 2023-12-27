@@ -16,7 +16,6 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <fmt/ranges.h>
 
 template <typename KeyType, typename ValueType>
 class BiMap {

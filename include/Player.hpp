@@ -11,28 +11,34 @@
 #include <vector>
 
 #include "Action.hpp"
-#include "PayoffMatrix.hpp"
 #include "QTable.hpp"
+#include "Strategy.hpp"
+#include "Transition.hpp"
 
 class Player {
-  /** 利用静态变量的特性来维护公共信息，数据类型为map，key为string，value 为
-   * double */
  private:
+  /** make use of the static variable to maintain the common information, the
+   * data type is map, the key is string, and the value is double */
   static std::map<std::string, double> commonInfo;
   std::string name;
   int score;
 
   std::vector<Action> actions;
-  std::vector<double> actionPossibility;  //< 随机动作概率（混合策略）
 
-  std::mt19937 gen;  //< double 随机数生成器
+  //! random action possibility(mixed strategy)
+  std::vector<double> actionPossibility;
 
-  std::map<std::string, std::vector<std::vector<std::string>>>
-      strategyTables;  //< 每种策略的动作函数表
-  std::unordered_map<std::string, Action>
-      strategyFunc;  //<
-                     // 每种策略的动作函数，key由strategyTables的key和所有输入拼接组成，value为动作名称
-  Strategy strategy;  //< 当前策略
+  //! random double generator
+  std::mt19937 gen;
+
+  //! the action function table of each strategy
+  std::map<std::string, std::vector<std::vector<std::string>>> strategyTables;
+
+  //!  the action function of each strategy, key is the strategy name, value is
+  //!  the action
+  std::unordered_map<std::string, Action> strategyFunc;
+  //! current strategy
+  Strategy strategy;
 
   std::vector<Strategy> strategies;
 
@@ -40,23 +46,24 @@ class Player {
 
   std::map<std::string, double> vars;
 
-  /** 针对q-learning 训练场景下 strategy 未确定的属性，区分：strategy 代表确定的策略，由csv文件存储，并通过hash方式被读取为一个离散函数，而 q-table 则是一个单纯的二维数组 */
+  /** 针对q-learning 训练场景下 strategy 未确定的属性，区分：strategy
+   * 代表确定的策略，由csv文件存储，并通过hash方式被读取为一个离散函数，而
+   * q-table 则是一个单纯的二维数组 */
   QTable qTable;
-  /** greedy-epsilon */
-  double epsilon;
 
  public:
   Player(const Player &other);
-  Player(std::string name, int score, std::vector<Action> actions, double epsilon = 0);
+  Player(std::string const& name, int score, std::vector<Action> const& actions,
+               const std::vector<std::string>& rowNames,
+                        const std::vector<std::string>& colNames);
   ~Player();
 
-  /** 根据动作概率返回一个动作 */
-  Action play();
-
   /** 根据输入返回一个动作，需要strategyTables */
-  Action donate(std::string const& recipientReputation, double mu = 0, bool train = false);
+  Action donate(std::string const &recipientReputation, double epsilon,
+                double action_error_p = 0,  bool train = false);
 
-  Action reward(std::string const& donorActionName, double mu = 0, bool train = false);
+  Action reward(std::string const &donorActionName, double epsilon, double action_error_p = 0,
+                bool train = false);
 
   /**根据查询到的收益的delta值，更新分数*/
   void updateScore(double delta) {
@@ -166,7 +173,7 @@ class Player {
   // 随机性行为，基于对象内部的随机数生成器，由于使用了
   // 随机数生成器，随机行为不能用const修饰
   Strategy getRandomOtherStrategy(std::vector<Strategy> &alterStrategy);
-  Action getRandomAction(std::vector<Action> &alterAction); 
+  Action getRandomAction(std::vector<Action> const &alterAction);
 
   // 抛出一个0-1的概率
   double getProbability();
@@ -174,18 +181,16 @@ class Player {
 
   double getDeltaScore() const { return this->deltaScore; }
 
-
   // 通过 strategyTable 出动作
   Action getActionFromStrategyTable(
       const std::string &strategyName,
       const std::string &recipientReputation) const;
-  
+
   // 通过 qTable 出动作
   Action getActionFromQTable(const std::string &input);
 
-  void initQTable(const std::vector<std::string> &rowNames,
-                  const std::vector<std::string> &colNames);
-
+  void updateQTable(std::vector<Transition> const& transitions, double alpha,
+                    double discount);
 };
 
 #endif  // !PLAYER_HPP

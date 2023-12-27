@@ -1,5 +1,5 @@
 Donate Recipient:b c beta gamma,NR,SR,AR,UR
 C,-c b,beta-c b-gamma,-c b,beta-c b-gamma
-OC,-c b,beta-c b-gamma,-c b,beta-c b-gamma
-OD,0 0,0 0,beta -gamma,beta -gamma
+DISC,-c b,beta-c b-gamma,-c b,beta-c b-gamma
+NDISC,0 0,0 0,beta -gamma,beta -gamma
 D,0 0,0 0,beta -gamma,beta -gamma

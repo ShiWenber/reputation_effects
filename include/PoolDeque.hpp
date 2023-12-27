@@ -9,6 +9,7 @@
  *
  */
 #include <deque>
+#include <random>
 
 #ifndef POOLVECTOR_HPP
 #define POOLVECTOR_HPP
@@ -18,14 +19,17 @@ class PoolDeque {
  private:
   std::deque<T> pool;
   int maxSize;
+  std::mt19937 gen;
 
  public:
   PoolDeque(int maxSize);
   PoolDeque() {}
   ~PoolDeque();
 
-  void enQueue(T value);
-  // 重载下标运算符
+  std::vector<T> sample(int batchSize);
+
+  void enQueue(T const& value);
+  // overload operator[] to access the element in the pool
   T& operator[](int index);
   bool isEmpty() const { return this->pool.empty(); }
   bool isFull() const { return this->pool.size() == this->maxSize; }

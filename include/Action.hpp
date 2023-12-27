@@ -15,6 +15,7 @@ class Action {
   ~Action();
 
   bool operator<(const Action &action) const { return this->id < action.id; }
+  bool operator==(const Action &action) const;
 
   std::string getName() const { return this->name; }
   void setName(const std::string &name) { this->name = name; }

@@ -3,14 +3,18 @@
 #include <map>
 #include <vector>
 #include <utility>
+#include <random>
 
 #include "BiMap.hpp"
+#include "Transition.hpp"
 
 class QTable {
  private:
   BiMap<std::string, int> rowIndex;
   BiMap<std::string, int> colIndex;
   std::vector<std::vector<double>> table;
+  //! int random number generator
+  std::mt19937 gen;
 
  public:
   QTable(std::vector<std::string> rowNames, std::vector<std::string> colNames);
@@ -29,7 +33,7 @@ class QTable {
     return this->table[this->rowIndex.at(rowName)];
   }
 
-  std::pair<std::string, int> getBestOutput(std::string rowName) const;
+  std::pair<std::string, int> getBestOutput(std::string rowName);
   
 
 
@@ -45,6 +49,8 @@ class QTable {
 
   BiMap<std::string, int> getColIndex() const { return this->colIndex; }
   void setColIndex(const BiMap<std::string, int> &colIndex) { this->colIndex = colIndex; }
+
+  void update(Transition const& transitions, double alpha, double discount);
 
 };
 

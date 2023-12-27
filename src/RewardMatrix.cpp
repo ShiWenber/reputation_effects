@@ -156,8 +156,8 @@ void RewardMatrix::print() const {
   std::cout << "-----------------<<" << std::endl;
 }
 
-std::vector<double> RewardMatrix::getReward(Action player1_action,
-                                            Action player2_action) {
+std::vector<double> RewardMatrix::getReward(Action const& player1_action,
+                                            Action const& player2_action) const {
   int id1 = player1_action.getId();
   int id2 = player2_action.getId();
   if (id1 < this->player1_actions.size() && id2 < this->player2_actions.size()) {

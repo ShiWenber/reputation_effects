@@ -1,11 +1,13 @@
 #include "Player.hpp"
 
+#include <cassert>
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <sstream>
-#include <cassert>
+
+#include "QTable.hpp"
 
 // init static member commonInfo
 std::map<std::string, double> Player::commonInfo =
@@ -24,19 +26,22 @@ Player::Player(const Player& other)
       vars(other.vars),
       qTable(other.qTable) {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  this->gen = std::mt19937(seed);  //< generate random numbers with time-based seed
+  this->gen =
+      std::mt19937(seed);  //< generate random numbers with time-based seed
 }
 
-Player::Player(std::string name, int score, std::vector<Action> actions,
-               double epsilon) {
+Player::Player(std::string const& name, int score,
+               std::vector<Action> const& actions,
+               const std::vector<std::string>& rowNames,
+               const std::vector<std::string>& colNames) {
   this->name = name;
   this->score = score;
   this->actions = actions;
   this->actionPossibility = std::vector<double>(actions.size(), 0);
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  this->gen = std::mt19937(seed);  //< generate random numbers with time-based seed
-  this->epsilon = epsilon;
-  // this->qTable = QTable();
+  this->gen =
+      std::mt19937(seed);  //< generate random numbers with time-based seed
+  this->qTable = QTable(rowNames, colNames);
 }
 
 Player::~Player() {}
@@ -64,28 +69,34 @@ Player::~Player() {}
 
 /**
  * @brief
- * 
+ *
  * return the action of this round by reputation
  * by this->strategy, select the corresponding strategyTable,
- * strategyTable's last row is output, other rows are input, and correspond to the order of the parameters
+ * strategyTable's last row is output, other rows are input, and correspond to
+ * the order of the parameters
  *
  * @param recipientReputation
- * @param mu The probability of action mutation
+ * @param action_error_p The probability of action mutation
  * @return Action
  */
-Action Player::donate(std::string const& recipientReputation, double mu, bool train) {
+Action Player::donate(std::string const& recipientReputation, double epsilon,
+                      double action_error_p, bool train) {
   Action resAction;
   if (train) {
-    /** 使用qTable 来出动作 */
-    resAction = this->getActionFromQTable(recipientReputation);
+    if (this->getProbability() < epsilon) {
+      resAction = this->getRandomAction(this->actions);
+    } else {
+      // use qTable to get action
+      resAction = this->getActionFromQTable(recipientReputation);
+    }
   } else {
-    /** 使用 确定 strategy 的离散函数出动作 */
+    // use strategyTable to get action
     resAction = this->getActionFromStrategyTable(this->strategy.getName(),
                                                  recipientReputation);
   }
 
-  // mu概率Action突变
-  if (this->getProbability() < mu) {
+  // there is a probability of action_error_p to mutate
+  if (this->getProbability() < action_error_p) {
     std::vector<Action> alterActions;
     for (Action action : this->actions) {
       if (action.getName() != resAction.getName()) {
@@ -97,18 +108,23 @@ Action Player::donate(std::string const& recipientReputation, double mu, bool tr
   return resAction;
 }
 
-Action Player::reward(std::string const& donorActionName, double mu, bool train) {
+Action Player::reward(std::string const& donorActionName, double epsilon,
+                      double action_error_p, bool train) {
   Action resAction;
   if (train) {
-    /** 通过 qTable 出动作 */
-    resAction = this->getActionFromQTable(donorActionName);
+    if (this->getProbability() < epsilon) {
+      resAction = this->getRandomAction(this->actions);
+    } else {
+      // use qTable to get action
+      resAction = this->getActionFromQTable(donorActionName);
+    }
   } else {
     resAction = this->getActionFromStrategyTable(this->strategy.getName(),
                                                  donorActionName);
   }
 
-  // mu概率Action突变
-  if (this->getProbability() < mu) {
+  // there is a probability of action_error_p to mutate
+  if (this->getProbability() < action_error_p) {
     std::vector<Action> alterActions;
     for (Action action : this->actions) {
       if (action.getName() != resAction.getName()) {
@@ -284,7 +300,8 @@ int Player::getRandomInt(int start, int end) {
 
 Action Player::getActionFromStrategyTable(const std::string& strategyName,
                                           const std::string& input) const {
-  // construct key from input (for donor, it is reputation; for recipient, it is actionName)
+  // construct key from input (for donor, it is reputation; for recipient, it is
+  // actionName)
   std::string key = strategyName;
   key += "!" + input;
   Action resAction = this->strategyFunc.at(key);
@@ -298,27 +315,14 @@ Action Player::getActionFromStrategyTable(const std::string& strategyName,
  * @return Action
  */
 Action Player::getActionFromQTable(const std::string& input) {
-  // 抛出一个随机double
-  double p = this->getProbability();
-  Action resAction;
-  if (p < this->epsilon) {
-    auto tempActions = this->actions;
-    resAction = this->getRandomAction(tempActions);
-  } else {
-    auto [actionName, actionId] = this->qTable.getBestOutput(input);
-    resAction = Action(actionName, actionId);
-  }
-  assert(resAction.getName() != "" && "action not found");
-  // C++ 17特性，结构化绑定
+  // the feature of C++ 17, structured binding
+  auto [actionName, actionId] = this->qTable.getBestOutput(input);
+  Action resAction(actionName, actionId);
+  assert(resAction.getName() != "");
   return resAction;
 }
 
-void Player::initQTable(const std::vector<std::string>& rowNames,
-                        const std::vector<std::string>& colNames) {
-  this->qTable = QTable(rowNames, colNames);
-}
-
-Action Player::getRandomAction(std::vector<Action>& alterActions) {
+Action Player::getRandomAction(std::vector<Action> const& alterActions) {
   // 判断是否有可选的策略
   if (alterActions.size() <= 0) {
     std::cerr << "no alter action" << std::endl;
@@ -327,4 +331,11 @@ Action Player::getRandomAction(std::vector<Action>& alterActions) {
   std::uniform_int_distribution<int> randomDis(0, alterActions.size() - 1);
   int randInt = randomDis(this->gen);
   return alterActions[randInt];
+}
+
+void Player::updateQTable(std::vector<Transition> const& transitions,
+                          double alpha, double discount) {
+  for (auto transition : transitions) {
+    this->qTable.update(transition, alpha, discount);
+  }
 }

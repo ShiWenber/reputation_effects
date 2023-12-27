@@ -32,7 +32,7 @@ class RewardMatrix {
   int getColNum() const { return this->colNum; }
   int getRowNum() const { return this->rowNum; }
   void print() const;
-  std::vector<double> getReward(Action player1_action, Action player2_action);
+  std::vector<double> getReward(Action const& player1_action, Action const& player2_action) const;
 
   
 

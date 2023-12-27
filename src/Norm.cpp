@@ -3,10 +3,21 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <chrono>
 
 Norm::Norm() {}
 
-Norm::Norm(std::string csvPath) { this->loadNormFunc(csvPath); }
+Norm::Norm(std::string csvPath) {
+  this->loadNormFunc(csvPath);
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  this->gen = std::mt19937(seed);  //< generate random numbers with time-based seed
+}
+
+double Norm::getProbability() {
+  std::uniform_real_distribution<double> randomDis(0, 1);
+  double randDouble = randomDis(this->gen);
+  return randDouble;
+}
 
 Norm::~Norm() {}
 
@@ -63,17 +74,28 @@ void Norm::loadNormFunc(std::string csvPath) {
   }
 }
 
-double Norm::getReputation(Action const& donorAction, Action const& recipientAction) const {
-  std::string key = "!" + donorAction.getName() + "!" + recipientAction.getName();
+double Norm::getReputation(Action const& donorAction,
+                           Action const& recipientAction,
+                           double const reputation_error_p) {
+  std::string key =
+      "!" + donorAction.getName() + "!" + recipientAction.getName();
   double res = this->normFunc.at(key);
-  if (res == 0.0) {
-    // judge whether this->normFunc has key
-    if (this->normFunc.find(key) == this->normFunc.end()) {
-      // if the key is not found, throw the exception
-      std::cerr << "normFunc not found key: " << key << std::endl;
-      throw "normFunc not found key: " + key;
-    }
+ 
+  if (reputation_error_p == 0.0) {
+    return res;
   }
+
+  
+  if (this->getProbability() < reputation_error_p) {
+    if (res == 1.0) {
+      res = 0.0;
+    } else if (res == 0.0) {
+      res = 1.0;
+    } else {
+      std::cerr << "wrong reputation value: " << res << std::endl;
+      throw "wrong reputation value: " + std::to_string(res);
+    }
+  } 
 
   return res;
 }

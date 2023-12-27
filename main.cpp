@@ -1,41 +1,13 @@
 /**
  * @file main.cpp
  * @author ShiWenber (1210169842@qq.com)
- * @brief the simulation of the evolution of cooperation based on the static
- * payoff matrix (combined the reputation and norm)
- * 
- * This is a conventional fermi update evolution model, the payoff matrix is considered under the circumstance of long term
- * 
- * cite:
- * 1. Pal, S., Hilbe, C., 2022. Reputation effects drive the joint evolution of cooperation and social rewarding. Nat. Commun. 13, 5928. https://doi.org/10.1038/s41467-022-33551-y
- * 2. Guo, H., Song, Z., Geček, S., Li, X., Jusup, M., Perc, M., Moreno, Y., Boccaletti, S., Wang, Z., 2020. A novel route to cyclic dominance in voluntary social dilemmas. Journal of The Royal Society Interface 17, 20190789. https://doi.org/10.1098/rsif.2019.0789
- * 
- * but we have a change. To characterize the dynamic of reputation of the recipient, we should make the game actually played after the imitation done.
- * which means little change of reputation distribution will take place in each step with strategy distribution changed.
- * 1. Focal player imitated the rolemodel considered that the rolemodel will have a higher payoff than the focal player.
- * 2. Focal player immediately play the game with a random select neighbor using the new strategy.
- * 3. The reputation distribution will be updated according to the game result.
- * 4. During the next step, a new focal player will imitate a new rolemodel under the new reputation distribution.
- * 
- * It is should be noted that the reputation distribution's dynamic just influence the players only thinking in short term, instead of the players who have a long term thinking(They only consider the stability of the reputation distribution).
- * 
+ * @brief  the simulation of the evolution of cooperation based on q-learning
  * @version 0.1
- * @date 2023-09-12
+ * @date 2023-12-25
  *
  * @copyright Copyright (c) 2023
  *
  */
-
-#define CREATE_BAR(n)                                                   \
-  ProgressBar bar##n {                                                  \
-    option::BarWidth{50}, option::Start{" ["}, option::Fill{"*"},       \
-        option::Lead{"*"}, option::Remainder{"-"}, option::End{"]"},    \
-        option::PrefixText{"Progress: " + std::to_string(n) + " "},     \
-        option::ShowElapsedTime{true}, option::ShowRemainingTime{true}, \
-        option::FontStyles {                                            \
-      std::vector<FontStyle> { FontStyle::bold }                        \
-    }                                                                   \
-  }
 
 #include <cmath>
 #include <iostream>
@@ -66,12 +38,24 @@
 #include <numeric>
 
 #include "Action.hpp"
+#include "Buffer.hpp"
 #include "JsonFile.hpp"
 #include "Norm.hpp"
-#include "PayoffMatrix.hpp"
 #include "Player.hpp"
 #include "RewardMatrix.hpp"
+#include "Transition.hpp"
+
 #define REPUTATION_STR "reputation"
+#define CREATE_BAR(n)                                                   \
+  ProgressBar bar##n {                                                  \
+    option::BarWidth{50}, option::Start{" ["}, option::Fill{"*"},       \
+        option::Lead{"*"}, option::Remainder{"-"}, option::End{"]"},    \
+        option::PrefixText{"Progress: " + std::to_string(n) + " "},     \
+        option::ShowElapsedTime{true}, option::ShowRemainingTime{true}, \
+        option::FontStyles {                                            \
+      std::vector<FontStyle> { FontStyle::bold }                        \
+    }                                                                   \
+  }
 
 using namespace std;
 using namespace indicators;
@@ -79,10 +63,12 @@ using namespace std::chrono;
 using namespace boost;
 
 /**
- * @brief 主要执行体，可以并行
+ * @brief fermi function, used to calculate the probability of strategy change
  *
- * @param payoff_current 现状收益
- * @param payoff_new 新策略收益
+ * @param payoff_current 0.5 * (donor + recipient) the expected payoff of the
+ * focal player
+ * @param payoff_new 0.5 * (donor + recipient) the expected payoff of the role
+ * model player
  * @param s
  * @return double
  */
@@ -131,7 +117,7 @@ double getCoopRate(
     } else if (do_stg_name == "DISC") {
       // 如果好人中有DISC存在，那么乘 good_rep_num - 1 否则 乘 good_rep_num
       //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘
-      ///good_rep_num - 1
+      /// good_rep_num - 1
 
       temp_sum +=
           donorIdSet.size() * good_rep_num;  // error, should reduce the number
@@ -156,29 +142,6 @@ double getCoopRate(
   }
 
   return temp_sum / (n * (n - 1));
-}
-
-double getAvgPayoff(
-    const Strategy& donorStrategy, const Strategy& recipientStrategy,
-    const PayoffMatrix& payoffMatrix,
-    const unordered_map<string, set<int>>& strategyName2donorId,
-    const unordered_map<string, set<int>>& strategyName2recipientId,
-    int population) {
-  double eval_donor = 0;
-  double eval_recipient = 0;
-  vector<double> players_payoff =
-      payoffMatrix.getPayoff(donorStrategy, recipientStrategy);
-  double eval_same =
-      accumulate(players_payoff.begin(), players_payoff.end(), 0.0) / 2;
-  for (int j = 0; j < 4; j++) {
-    Strategy d_stra = payoffMatrix.getRowStrategies()[j];
-    Strategy r_stra = payoffMatrix.getColStrategies()[j];
-    eval_donor += payoffMatrix.getPayoff(donorStrategy, r_stra)[0] *
-                  strategyName2recipientId.at(r_stra.getName()).size() * 0.5;
-    eval_recipient += payoffMatrix.getPayoff(d_stra, recipientStrategy)[1] *
-                      strategyName2donorId.at(d_stra.getName()).size() * 0.5;
-  }
-  return (1.0 / (population - 1)) * (eval_donor + eval_recipient - eval_same);
 }
 
 /**
@@ -227,7 +190,6 @@ string printStatistics(
            << recipient.getVarValue(REPUTATION_STR) << endl;
       throw "reputation value error";
     }
-    
   }
   assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
 
@@ -301,8 +263,10 @@ string printStatistics(
  *
  * @return int
  */
-void func(int stepNum, int population, double s, int b, int beta, int c,
-          int gamma, double mu, int normId, int updateStepNum, double p0, string payoff_matrix_config_name,
+void func(int stepNum, int episode, int buffer_capacity, int batch_size,
+          double alpha, double discount, int population, double s, int b,
+          int beta, int c, int gamma, double mu, double epsilon, int normId,
+          int updateStepNum, double p0, string payoff_matrix_config_name,
           ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
@@ -320,74 +284,56 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
   string normName = "norm" + to_string(normId);
 
-  // 加载payoffMatrix
-  // cout << "---------->>" << endl;
-  PayoffMatrix payoffMatrix("./payoffMatrix/" + payoff_matrix_config_name + "/" + "PayoffMatrix" + to_string(normId) +
-                            ".csv");
-  // fmt::print("payoffMatrix_g: {}\n", payoffMatrix_g.getPayoffMatrixStr());
-  // // 输出需要赋值的所有变量
-  // fmt::print("vars: {}\n", payoffMatrix_g.getVars());
-  // cout << "after assign:" << endl;
+  RewardMatrix rewardMatrix("./rewardMatrix/RewardMatrix.csv");
 
   // assign vars
-  payoffMatrix.updateVar("b", b);
-  payoffMatrix.updateVar("beta", beta);
-  payoffMatrix.updateVar("c", c);
-  payoffMatrix.updateVar("gamma", gamma);
-  payoffMatrix.updateVar("p", p0);
+  rewardMatrix.updateVar("b", b);
+  rewardMatrix.updateVar("beta", beta);
+  rewardMatrix.updateVar("c", c);
+  rewardMatrix.updateVar("gamma", gamma);
+  rewardMatrix.updateVar("p", p0);
 
-  payoffMatrix.evalPayoffMatrix();
-
-  // cout << "after eval:" << endl;
-  // for (int r = 0; r < payoffMatrix_g.getRowNum(); r++) {
-  //   for (int c = 0; c < payoffMatrix_g.getColNum(); c++) {
-  //     for (int p = 0; p < payoffMatrix_g.getPlayerNum(); p++) {
-  //       cout << payoffMatrix_g.getPayoffMatrix()[r][c][p] << ",";
-  //     }
-  //     cout << "\t";
-  //   }
-  //   cout << endl;
-  // }
-  // cout << "---------<<" << endl;
+  rewardMatrix.evalRewardMatrix();
+  rewardMatrix.print();
 
   // initialize two players
+  vector<Strategy> donorStrategies;
+  donorStrategies.push_back(Strategy("C", 0));
+  donorStrategies.push_back(Strategy("DISC", 1));
+  donorStrategies.push_back(Strategy("NDISC", 2));
+  donorStrategies.push_back(Strategy("D", 3));
+
+  vector<Strategy> recipientStrategies;
+  recipientStrategies.push_back(Strategy("NR", 0));
+  recipientStrategies.push_back(Strategy("SR", 1));
+  recipientStrategies.push_back(Strategy("AR", 2));
+  recipientStrategies.push_back(Strategy("UR", 3));
+
   vector<Action> donorActions;
   donorActions.push_back(Action("C", 0));
   donorActions.push_back(Action("D", 1));
-  Player temp_donor("donor", 0, donorActions, epsilon);
-  temp_donor.initQTable({"0", "1"}, {"C", "D"});
-  Player donor_temp("donor", 0, donorActions);
-  vector<Strategy> donorStrategies = payoffMatrix.getRowStrategies();
-  donor_temp.setStrategies(donorStrategies);
-  donor_temp.loadStrategy("./strategy");
-  // fmt::print("donorStrategies: {}\n", donor_temp.getStrategyTables());
-  donor_temp.setStrategy("C");
+  Player donor_temp("donor", 0, donorActions, {"0", "1"}, {"C", "D"});
 
   vector<Action> recipientActions;
   recipientActions.push_back(Action("C", 0));
   recipientActions.push_back(Action("D", 1));
-  Player recipient_temp("recipient", 0, recipientActions);
-  vector<Strategy> recipientStrategies = payoffMatrix.getColStrategies();
-  recipient_temp.setStrategies(recipientStrategies);
-
-  recipient_temp.loadStrategy("./strategy");
-  // fmt::print("recipientStrategies: {}\n", recipient_temp.getStrategyTables());
-  recipient_temp.setStrategy("NR");
-
-  // initialize recipient_temp's reputation
-  recipient_temp.addVar(REPUTATION_STR, 1);
-  // fmt::print("recipient_temp vars: {}\n", recipient_temp.getVars());
+  Player recipient_temp("recipient", 0, recipientActions, {"C", "D"},
+                        {"C", "D"});
+  recipient_temp.addVar(REPUTATION_STR, 0);
 
   // load norm
   string normPath = "./norm/" + normName + ".csv";
   Norm norm(normPath);
-  // fmt::print("norm: {}\n", norm.getNormTableStr());
 
   // the two players are used as templates to generate population players
   vector<Player> donors;
   vector<Player> recipients;
-  // time seed
-  unsigned seed_don = chrono::system_clock::now().time_since_epoch().count();
+
+  // use different time seeds to generate random numbers
+  unsigned seed_don =
+      chrono::system_clock::now()
+          .time_since_epoch()
+          .count();  // add the specified value to avoid the same seed
   default_random_engine gen_don(seed_don);
   uniform_int_distribution<int> dis_don(0, donorStrategies.size() - 1);
 
@@ -406,13 +352,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   std::mt19937 gen_probability(seed_probability);
   uniform_real_distribution<double> dis_probability(0, 1);
 
-  // record the strategy distribution of the population
-  unordered_map<string, set<int>> strategyName2DonorId;
-  unordered_map<string, set<int>> strategyName2RecipientId;
-  // judge if population can be divided by donorStrategies.size()
-  assert(population % donorStrategies.size() == 0);
-
   // reputation init vector
+  int good_rep_num = (int)population * p0;
   vector<int> reputation_value(ceil(population * (1 - p0)), 0);
   vector<int> good_rep_value((int)population * p0, 1);
   assert(reputation_value.size() + good_rep_value.size() == population);
@@ -421,53 +362,16 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                           good_rep_value.end());
   random_shuffle(reputation_value.begin(), reputation_value.end());
 
-  // strategy init vector, each strategy pair has the same number of players
-  vector<int> donor_stra_id;
-  vector<int> recipient_stra_id;
-  for (int i = 0; i < donorStrategies.size(); i++) {
-    donor_stra_id.insert(donor_stra_id.end(),
-                         population / (double)donorStrategies.size(), i);
-    for (int j = 0; j < recipientStrategies.size(); j++) {
-      recipient_stra_id.insert(recipient_stra_id.end(),
-                               (population / (double)donorStrategies.size()) /
-                                   (double)recipientStrategies.size(),
-                               j);
-    }
-  }
-  assert(donor_stra_id.size() == population &&
-         recipient_stra_id.size() == population);
-  vector<pair<int, int>> stra_id_pairs;
-  for (int i = 0; i < donor_stra_id.size(); i++) {
-    stra_id_pairs.push_back(make_pair(donor_stra_id[i], recipient_stra_id[i]));
-  }
-  random_shuffle(stra_id_pairs.begin(), stra_id_pairs.end());
-
   // initialize population players that have different strategies, and each
   // strategy has the same number of players
   for (int i = 0; i < population; i++) {
     Player temp_donor(donor_temp);
     Player temp_recipient(recipient_temp);
-    // int donor_stra_i = donor_stra_id[i];
-    // int recipient_stra_i = recipient_stra_id[i];
-    auto [donor_stra_i, recipient_stra_i] = stra_id_pairs[i];
-
-    temp_donor.setStrategy(donorStrategies[donor_stra_i]);
-    strategyName2DonorId[temp_donor.getStrategy().getName()].insert(i);
-    donors.push_back(temp_donor);
-
-    temp_recipient.setStrategy(recipientStrategies[recipient_stra_i]);
     temp_recipient.updateVar(REPUTATION_STR, reputation_value[i]);
 
-    // // fixed reputation to 1
-    // temp_recipient.updateVar(REPUTATION_STR, 1);
-
-    strategyName2RecipientId[temp_recipient.getStrategy().getName()].insert(i);
+    donors.push_back(temp_donor);
     recipients.push_back(temp_recipient);
   }
-
-  // printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-  //                 strategyName2DonorId, strategyName2RecipientId, population,
-  //                 0, false);
 
   // log
   string log_dir = "./log";
@@ -476,210 +380,162 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     filesystem::create_directory(log_dir);
   }
 
-  // string logName = "stepNum-" + to_string(stepNum) + "_population-" +
-  //                  to_string(population) + "_s-" + to_string(s) + "_b-" +
-  //                  to_string(b) + "_beta-" + to_string(beta) + "_c-" +
-  //                  to_string(c) + "_gamma-" + to_string(gamma) + "_mu-" +
-  //                  to_string(mu) + "_norm-" + normName + "_uStepN-" +
-  //                  to_string(updateStepNum) + "_p0-" + to_string(p0) + ".csv";
-
-  const json::value jv =
-  { {"stepNum", stepNum},
-    {"population", population},
-    {"s", s},
-    {"b", b},
-    {"beta", beta},
-    {"c", c},
-    {"gamma", gamma},
-    {"mu", mu},
-    {"normId", normId},
-    {"p0", p0},
-    {"payoffMatrix", payoff_matrix_config_name},
-    // not model parameters
-    {"other",
-     {
-         {"updateStepNum", updateStepNum},
-         {"logStep", log_step},
-     }
-    }
-  };
+  const json::value jv = {{"stepNum", stepNum},
+                          {"episode", episode},
+                          {"buffer_capacity", buffer_capacity},
+                          {"population", population},
+                          {"s", s},
+                          {"b", b},
+                          {"beta", beta},
+                          {"c", c},
+                          {"gamma", gamma},
+                          {"mu", mu},
+                          {"normId", normId},
+                          {"p0", p0},
+                          {"payoffMatrix", payoff_matrix_config_name},
+                          {"epsilon", epsilon},
+                          // not model parameters
+                          {"other",
+                           {
+                               {"updateStepNum", updateStepNum},
+                               {"logStep", log_step},
+                           }}};
 
   string log_file_path = logJson(log_dir, jv);
 
   auto out = fmt::output_file(log_file_path);
-  // generate header
-  string line = "step";
-  for (Strategy donorS : donorStrategies) {
-    for (Strategy recipientS : recipientStrategies) {
-      line += "," + donorS.getName() + "-" + recipientS.getName();
-    }
-  }
-  for (Strategy donorS : donorStrategies) {
-    line += "," + donorS.getName();
-  }
-  for (Strategy recipientS : recipientStrategies) {
-    line += "," + recipientS.getName();
-  }
-  line += ",good_rep_num,cr";
 
-  out.print("{}\n", line);
-
-  string logLine = printStatistics(
-      donors, recipients, donorStrategies, recipientStrategies,
-      strategyName2DonorId, strategyName2RecipientId, population, 0, false);
-  out.print("{}\n", logLine);
+  // log header
+  vector<string> headers = {"episode", "reward", "cr", "good_rep_p"};
+  string log_header = headers[0];
+  // 遍历1-n
+  for (auto it = headers.begin() + 1; it != headers.end(); ++it) {
+    log_header += "," + *it;
+  }
+  out.print("{}\n", log_header);
 
   uniform_int_distribution<int> dis(0, population - 1);
-  for (int step = 0; step < stepNum; step++) {
+
+  for (int i_e = 0; i_e < episode; i_e++) {
     // update progress bar
     if (turn_up_progress_bar) {
       // (*bar).set_progress((double)step / stepNum * 100);
-      // 只在进度条每增加1%时更新一次
       // only update once when the progress bar increases by 1%
-      if (step % (stepNum / 100) == 0) {
+      if (i_e % (episode / 100) == 0) {
         (*bar).tick();
       }
     } else if (turn_up_dynamic_bar) {
-      if (step % (stepNum / 100) == 0) {
+      if (i_e % (episode / 100) == 0) {
         (*dynamic_bar)[dynamic_bar_id].tick();
       }
     }
 
-    // // record the strategy change of the population to update
-    // strategyName2donorId and strategyName2recipientId unordered_map<int,
-    // pair<string, string>> donor2StrateChange; unordered_map<int, pair<string,
-    // string>> recipientId2StrateChange;
+    // refresh buffer  0 represent the donor, 1 represent the recipient
+    Buffer buffer(2, population, buffer_capacity);
+    int cooperate_times = 0;
+    double reward_two_players = 0; // TODO: this is only one step reward computing from the donor's reward + recipient's reward
+    for (int step = 0; step < stepNum; step++) {
+      // The random number of 0-population is extracted
+      // i_1 as donor, i_2 as recipient
+      int i_1 = dis(gen_don);
+      int i_2 = dis(gen_rec);
+      // to prevent the same person from being drawn
+      while (i_1 == i_2) {
+        i_1 = dis(gen_don);
+        i_2 = dis(gen_rec);
+      }
 
-    // The random number of 0-population is extracted
-    int focal_i = dis(gen_don);
-    int rolemodel_i = dis(gen_rec);
-    // to prevent the same person from being drawn
-    while (focal_i == rolemodel_i) {
-      focal_i = dis(gen_don);
-      rolemodel_i = dis(gen_rec);
-    }
+      Player& donor = donors[i_1];
+      Player& recipient = recipients[i_2];
 
-    // mutation probability to explore other strategies randomly
-    double p = dis_probability(gen_probability);
-    assert(p >= 0 && p <= 1);
-    // there is a probability of mu to explore other strategies randomly
-    if (p < mu) {
-      // update the focul's strategy
-      int randId_d = 0;
-      int randId_r = 0;
-      do {
-        randId_d = donors[focal_i].getRandomInt(0, donorStrategies.size() - 1);
-        randId_r =
-            recipients[focal_i].getRandomInt(0, recipientStrategies.size() - 1);
-      } while (randId_d == donors[focal_i].getStrategy().getId() &&
-               randId_r == recipients[focal_i].getStrategy().getId());
+      double reputation = recipient.getVarValue(REPUTATION_STR);
+      Action donor_action =
+          donor.donate(to_string((int)reputation), epsilon, 0.0, true);
+      Action recipient_action =
+          recipient.reward(donor_action.getName(), epsilon, 0.0, true);
+      double new_reputation =
+          norm.getReputation(donor_action, recipient_action, 0.0);
+      recipient.updateVar(REPUTATION_STR, new_reputation);
 
-      //   // record the strategy change of the population to update
-      //   distribution after the step ends donor2StrateChange[focal_i] =
-      //       make_pair(donors[focal_i].getStrategy().getName(),
-      //                 donorStrategies[randId].getName());
+      // update the reputation distribution
+      if (reputation != new_reputation) {
+        if (reputation == 1 && new_reputation == 0) {
+          good_rep_num--;
+        }else if (reputation == 0 && new_reputation == 1) {
+          good_rep_num++;
+        }else {
+          cerr << "reputation error: " << reputation << "," << new_reputation
+               << endl;
+          throw "reputation error";
+        }
+      }
 
-      strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
-          focal_i);
-      donors[focal_i].setStrategy(donorStrategies[randId_d]);
-      strategyName2DonorId[donorStrategies[randId_d].getName()].insert(focal_i);
+      const vector<double>& rewards =
+          rewardMatrix.getReward(donor_action, recipient_action);
+      double donor_r = rewards[0];
+      double recipient_r = rewards[1];
+      reward_two_players += (donor_r + recipient_r);
 
-      //   // record the strategy change of the population to update
-      //   distribution after the step ends
-      //   recipientId2StrateChange[rolemodel_i] =
-      //       make_pair(recipients[rolemodel_i].getStrategy().getName(),
-      //                 recipientStrategies[randId].getName());
-      strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
-          .erase(focal_i);
-      recipients[focal_i].setStrategy(recipientStrategies[randId_r]);
-      strategyName2RecipientId[recipientStrategies[randId_r].getName()].insert(
-          focal_i);
-    } else {
-      Strategy rolemodel_donorStrategy = donors[rolemodel_i].getStrategy();
-      Strategy rolemodel_recipientStrategy =
-          recipients[rolemodel_i].getStrategy();
-      double rolemodel_payoff = getAvgPayoff(
-          rolemodel_donorStrategy, rolemodel_recipientStrategy, payoffMatrix,
-          strategyName2DonorId, strategyName2RecipientId, population);
+      // should update the q table of donor? TODO: not update now
+      Action new_donor_action =
+          donor.donate(to_string((int)new_reputation), epsilon, 0.0, true);
 
-      Strategy focul_donorStrategy = donors[focal_i].getStrategy();
-      Strategy focul_recipientStrategy = recipients[focal_i].getStrategy();
-      double focul_payoff = getAvgPayoff(
-          focul_donorStrategy, focul_recipientStrategy, payoffMatrix,
-          strategyName2DonorId, strategyName2RecipientId, population);
+      // buffer save the progress of the two players
+      Transition do_transition(to_string(static_cast<int>(reputation)),
+                               donor_action, donor_r,
+                               to_string(static_cast<int>(new_reputation)));
+      Transition re_transition(donor_action.getName(), recipient_action,
+                               recipient_r, new_donor_action.getName());
+      // this is experience for i_1 as donor
+      buffer.add(0, i_1, do_transition);
+      // this is experience for i_2 as recipient
+      buffer.add(1, i_2, re_transition);
 
-      // fermi
-      if (dis_probability(gen_probability) <
-          fermi(focul_payoff, rolemodel_payoff, s)) {
-        strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
-            focal_i);
-        donors[focal_i].setStrategy(rolemodel_donorStrategy);
-        strategyName2DonorId[rolemodel_donorStrategy.getName()].insert(focal_i);
+      // TODO: just donor C or donor-recipient all C
+      if (donor_action.getName() == "C" && recipient_action.getName() == "C") {
+        cooperate_times++;
+      }
 
-        strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
-            .erase(focal_i);
-        recipients[focal_i].setStrategy(rolemodel_recipientStrategy);
-        strategyName2RecipientId[rolemodel_recipientStrategy.getName()].insert(
-            focal_i);
+      if (buffer.size(0, i_1) > batch_size) {
+        // sample from the buffer
+        vector<Transition> do_batch = buffer.sample(0, i_1, batch_size);
+        // update q table
+        donor.updateQTable(do_batch, alpha, discount);
+      }
+      if (buffer.size(1, i_2) > batch_size) {
+        vector<Transition> re_batch = buffer.sample(1, i_2, batch_size);
+        recipient.updateQTable(re_batch, alpha, discount);
       }
     }
-
-    // focal player play the game with a random select neighbor k using the new strategy
-    int k = dis(gen_don);
-    while (k == focal_i) {
-      k = dis(gen_don);
-    }
-
-    // The position in the game is randomly selected between focal_i and k
-    // 1. focal_i as donor and k as recipient
-    // 2. k as donor and focal_i as recipient
-    double random_p = dis_probability(gen_probability);
-    assert(random_p >= 0 && random_p <= 1);
-    Player* donor;
-    Player* recipient;
-    if (random_p > 0.5) {
-      donor = &donors[focal_i];
-      recipient = &recipients[k];
-    } else {
-      donor = &donors[k];
-      recipient = &recipients[focal_i];
-    }
-
-    double reputation = recipient->getVarValue(REPUTATION_STR);
-    Action donor_action = donor->donate(to_string((int) reputation), mu);
-    Action recipient_action = recipient->reward(donor_action.getName(), mu);
-    double new_reputation = norm.getReputation(donor_action, recipient_action);
-    recipient->updateVar(REPUTATION_STR, new_reputation);
-
-    if (step % log_step == 0) {
-      // 生成log
-      out.print("{}\n",
-                printStatistics(donors, recipients, donorStrategies,
-                                recipientStrategies, strategyName2DonorId,
-                                strategyName2RecipientId, population, step + 1,
-                                false));
-    }
+    string log_line = to_string(i_e);
+    log_line += "," + to_string(reward_two_players / static_cast<double>(stepNum));
+    log_line += "," + to_string(cooperate_times / static_cast<double>(stepNum));
+    log_line += "," + to_string(good_rep_num / static_cast<double>(population));
+    out.print("{}\n", log_line);
   }
-
-  // printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-  //                 strategyName2DonorId, strategyName2RecipientId, population,
-  //                 stepNum, false);
 }
 
-DEFINE_int32(stepNum, 1000, "the number of steps");
-DEFINE_int32(population, 160, "the number of population");
+DEFINE_int32(stepNum, 200, "the number of steps in each episode");
+DEFINE_int32(episode, 20000, "the number of episodes");
+DEFINE_int32(buffer_capacity, 1000, "the capacity of buffer");
+DEFINE_int32(batch_size, 1, "the size of batch");
+DEFINE_double(alpha, 0.1, "the learning rate");
+DEFINE_double(discount, 0.99, "the discount factor");
+DEFINE_int32(population, 16, "the number of population");
 DEFINE_double(s, 1, "the parameter of fermi function");
 DEFINE_int32(b, 4, "the parameter of payoff matrix");
 DEFINE_int32(beta, 3, "the parameter of payoff matrix");
 DEFINE_int32(c, 1, "the parameter of payoff matrix");
 DEFINE_int32(gamma, 1, "the parameter of payoff matrix");
 DEFINE_double(mu, 0.05, "the probability of mutation");
+DEFINE_double(epsilon, 0.1, "the probability of mutation");
 // DEFINE_int32(normId, 10, "the id of norm");
 DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
 DEFINE_double(p0, 1, "the probability of good reputation");
 DEFINE_int32(logStep, 1, "the number of steps to log");
-DEFINE_int32(threads, 11, "the number of threads");
-DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error", "the name of payoff matrix config");
+DEFINE_int32(threads, 16, "the number of threads");
+DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error",
+              "the name of payoff matrix config");
 
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(
@@ -760,15 +616,13 @@ int main(int argc, char** argv) {
 
   show_console_cursor(false);
 
-  // // 调试使用
+  // // for debug
   // CREATE_BAR(100);
   // ProgressBar *bar100_ptr = &bar100;
   // func(stepNum, population, s, b, beta, c, gamma, mu, normId, updateStepNum,
   // p0, bar100_ptr, true);
   // // func(stepNum, population, s, b, beta, c, gamma, mu, normId,
   // updateStepNum);
-
-  // 多线程加速
 
   arena.execute([&]() {
     // int start = 1000000;
@@ -779,11 +633,13 @@ int main(int argc, char** argv) {
     //        p0, nullptr, false, &bars, true, stepNum - start);
     // });
 
-    tbb::parallel_for(10, 11, [&](int normId) {
-      func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
-           FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
-           FLAGS_p0, FLAGS_payoff_matrix_config_name,
-             nullptr, false, &bars, true, normId, FLAGS_logStep);
+    tbb::parallel_for(0, 16, [&](int normId) {
+      func(FLAGS_stepNum, FLAGS_episode, FLAGS_buffer_capacity,
+           FLAGS_batch_size, FLAGS_alpha, FLAGS_discount, FLAGS_population,
+           FLAGS_s, FLAGS_b, FLAGS_beta, FLAGS_c, FLAGS_gamma, FLAGS_mu,
+           FLAGS_epsilon, normId, FLAGS_updateStepNum, FLAGS_p0,
+           FLAGS_payoff_matrix_config_name, nullptr, false, &bars, true, normId,
+           FLAGS_logStep);
     });
   });
 

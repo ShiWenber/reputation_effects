@@ -38,6 +38,33 @@ TEST(PoolDequeTest, AssignmentOperator) {
     EXPECT_EQ(deque2[0], 1);
 }
 
+TEST(PoolDequeTest, IsEmpty) {
+    PoolDeque<int> deque(10);
+    EXPECT_TRUE(deque.isEmpty());
+    deque.enQueue(1);
+    EXPECT_FALSE(deque.isEmpty());
+}
+
+TEST(PoolDequeTest, IsFull) {
+    PoolDeque<int> deque(10);
+    for (int i = 0; i < 10; i++) {
+        deque.enQueue(i);
+    }
+    EXPECT_TRUE(deque.isFull());
+}
+
+// when the queue is full, the earliest element will be popped automatically
+TEST(PoolDequeTest, AutoPop) {
+    PoolDeque<int> deque(10);
+    for (int i = 0; i < 20; i++) {
+        deque.enQueue(i);
+    }
+    EXPECT_EQ(deque.size(), 10);
+    EXPECT_EQ(deque[0], 10);
+    EXPECT_EQ(deque[9], 19);
+}
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
