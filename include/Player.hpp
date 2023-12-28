@@ -191,6 +191,13 @@ class Player {
 
   void updateQTable(std::vector<Transition> const& transitions, double alpha,
                     double discount);
+
+  /**
+   * @brief Get the Strategy Name From Q Table object
+   * 
+   * @return std::string 
+   */
+  std::string getStrategyNameFromQTable(int player_type);
 };
 
 #endif  // !PLAYER_HPP

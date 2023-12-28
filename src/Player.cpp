@@ -339,3 +339,45 @@ void Player::updateQTable(std::vector<Transition> const& transitions,
     this->qTable.update(transition, alpha, discount);
   }
 }
+
+std::string Player::getStrategyNameFromQTable(int player_type) {
+  std::string res;
+  // donor
+  if (player_type == 0) {
+    std::string input_0 = "0";
+    auto [action_name_0, action_id_0] = this->qTable.getBestOutput(input_0);
+    std::string input_1 = "1";
+    auto [action_name_1, action_id_1] = this->qTable.getBestOutput(input_1);
+    if (action_name_0 == "C" and action_name_1 == "C") {
+      res = "C";
+    } else if (action_name_0 == "C" and action_name_1 == "D") {
+      res = "NDISC";
+    } else if (action_name_0 == "D" and action_name_1 == "C") {
+      res = "DISC";
+    } else if (action_name_0 == "D" and action_name_1 == "D") {
+      res = "D";
+    } else {
+      std::cerr << "action name error" << std::endl;
+      throw "action name error";
+    }
+  } else if (player_type == 1) {
+    std::string input_c = "C";
+    auto [action_name_c, action_id_c] = this->qTable.getBestOutput(input_c);
+    std::string input_d = "D";
+    auto [action_name_d, action_id_d] = this->qTable.getBestOutput(input_d);
+    if (action_name_c == "C" and action_name_d == "C") {
+      res = "UR";
+    } else if (action_name_c == "C" and action_name_d == "D") {
+      res = "SR";
+    } else if (action_name_c == "D" and action_name_d == "C") {
+      res = "AR";
+    } else if (action_name_c == "D" and action_name_d == "D") {
+      res = "NR";
+    } else {
+      std::cerr << "action name error" << std::endl;
+      throw "action name error";
+    }
+  }
+
+  return res;
+}

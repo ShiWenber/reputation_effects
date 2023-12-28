@@ -155,94 +155,43 @@ double getCoopRate(
  * @param recipients
  * @param donorStrategies
  * @param recipientStrategies
- * @param strategyName2DonorId
- * @param strategyName2RecipientId
- * @param population
- * @param step
- * @param print
+ * @param i_e
+ * @param good_rep_num
+ * @param step_num
+ * @param cooperate_times
  * @return string
  */
-string printStatistics(
-    const vector<Player>& donors, const vector<Player>& recipients,
-    const vector<Strategy>& donorStrategies,
-    const vector<Strategy>& recipientStrategies,
-    const unordered_map<string, set<int>>& strategyName2DonorId,
-    const unordered_map<string, set<int>>& strategyName2RecipientId,
-    int population, int step, bool print) {
-  double population_double = (double)population;
+string printStatistics(vector<Player>& donors,
+                       vector<Player>& recipients,
+                       const vector<Strategy>& donorStrategies,
+                       const vector<Strategy>& recipientStrategies, int i_e,
+                       int good_rep_num, int step_num, double cooperate_times, double reward_two_players, int population) {
+  string log_line = to_string(i_e);
+
+  double population_double = static_cast<double>(population);  
   // unordered_map<string, int> strategyPair2Num;
   unordered_map<string, int> strategyPair2Num;
   string key_str;
   unordered_map<string, set<int>> reputation2Id;
   for (int i = 0; i < population; i++) {
-    const Player& donor = donors[i];
-    const Player& recipient = recipients[i];
-    key_str =
-        donor.getStrategy().getName() + "-" + recipient.getStrategy().getName();
+    Player& donor = donors[i];
+    Player& recipient = recipients[i];
+    key_str = donor.getStrategyNameFromQTable(0) + "-" +
+              recipient.getStrategyNameFromQTable(1);
     strategyPair2Num[key_str]++;
+  }
 
-    if (recipient.getVarValue(REPUTATION_STR) == 1.0) {
-      reputation2Id["1"].insert(i);
-    } else if (recipient.getVarValue(REPUTATION_STR) == 0.0) {
-      reputation2Id["0"].insert(i);
-    } else {
-      cerr << "reputation value error: "
-           << recipient.getVarValue(REPUTATION_STR) << endl;
-      throw "reputation value error";
+  for (Strategy donorS : donorStrategies) {
+    for (Strategy recipientS : recipientStrategies) {
+      key_str = donorS.getName() + "-" + recipientS.getName();
+      log_line += "," + to_string(strategyPair2Num[key_str] / population_double);
     }
   }
-  assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
-
-  string logLine = to_string(step);
-
-  if (print) {
-    fmt::print("strategyPair2Num: {}\n", strategyPair2Num);
-    for (Strategy donorS : donorStrategies) {
-      for (Strategy recipientS : recipientStrategies) {
-        key_str = donorS.getName() + "-" + recipientS.getName();
-        fmt::print("{0}: {1}, ", key_str,
-                   strategyPair2Num[key_str] / population_double);
-      }
-    }
-    fmt::print("\n");
-    for (Strategy donorS : donorStrategies) {
-      key_str = donorS.getName();
-      fmt::print("{0}: {1}, ", key_str,
-                 strategyName2DonorId.at(key_str).size() / population_double);
-    }
-    fmt::print("\n");
-    for (Strategy recipientS : recipientStrategies) {
-      key_str = recipientS.getName();
-      fmt::print(
-          "{0}: {1}, ", key_str,
-          strategyName2RecipientId.at(key_str).size() / population_double);
-    }
-  } else {
-    for (Strategy donorS : donorStrategies) {
-      for (Strategy recipientS : recipientStrategies) {
-        key_str = donorS.getName() + "-" + recipientS.getName();
-        logLine +=
-            "," + to_string(strategyPair2Num[key_str] / population_double);
-      }
-    }
-    for (Strategy donorS : donorStrategies) {
-      key_str = donorS.getName();
-      logLine += "," + to_string(strategyName2DonorId.at(key_str).size() /
-                                 population_double);
-    }
-    for (Strategy recipientS : recipientStrategies) {
-      key_str = recipientS.getName();
-      logLine += "," + to_string(strategyName2RecipientId.at(key_str).size() /
-                                 population_double);
-    }
-
-    logLine += "," + to_string(reputation2Id["1"].size());
-    double coop_rate =
-        getCoopRate(strategyName2DonorId, strategyName2RecipientId, population,
-                    reputation2Id);
-    logLine += "," + to_string(coop_rate);
-  }
-  return logLine;
+  log_line += "," + to_string(good_rep_num / static_cast<double>(population));
+  log_line += "," + to_string(cooperate_times / static_cast<double>(step_num));
+  log_line +=
+      "," + to_string(reward_two_players / static_cast<double>(step_num));
+  return log_line;
 }
 
 /**
@@ -406,12 +355,13 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
   auto out = fmt::output_file(log_file_path);
 
   // log header
-  vector<string> headers = {"episode", "reward", "cr", "good_rep_p"};
-  string log_header = headers[0];
-  // 遍历1-n
-  for (auto it = headers.begin() + 1; it != headers.end(); ++it) {
-    log_header += "," + *it;
+  string log_header = "episode";
+  for (Strategy donorS : donorStrategies) {
+    for (Strategy recipientS : recipientStrategies) {
+      log_header += "," + donorS.getName() + "-" + recipientS.getName();
+    }
   }
+  log_header += ",good_rep,cr,reward";
   out.print("{}\n", log_header);
 
   uniform_int_distribution<int> dis(0, population - 1);
@@ -433,7 +383,9 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
     // refresh buffer  0 represent the donor, 1 represent the recipient
     Buffer buffer(2, population, buffer_capacity);
     int cooperate_times = 0;
-    double reward_two_players = 0; // TODO: this is only one step reward computing from the donor's reward + recipient's reward
+    double reward_two_players =
+        0;  // TODO: this is only one step reward computing from the donor's
+            // reward + recipient's reward
     for (int step = 0; step < stepNum; step++) {
       // The random number of 0-population is extracted
       // i_1 as donor, i_2 as recipient
@@ -461,9 +413,9 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       if (reputation != new_reputation) {
         if (reputation == 1 && new_reputation == 0) {
           good_rep_num--;
-        }else if (reputation == 0 && new_reputation == 1) {
+        } else if (reputation == 0 && new_reputation == 1) {
           good_rep_num++;
-        }else {
+        } else {
           cerr << "reputation error: " << reputation << "," << new_reputation
                << endl;
           throw "reputation error";
@@ -507,10 +459,9 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
         recipient.updateQTable(re_batch, alpha, discount);
       }
     }
-    string log_line = to_string(i_e);
-    log_line += "," + to_string(reward_two_players / static_cast<double>(stepNum));
-    log_line += "," + to_string(cooperate_times / static_cast<double>(stepNum));
-    log_line += "," + to_string(good_rep_num / static_cast<double>(population));
+    const string & log_line = printStatistics(donors, recipients, donorStrategies,
+                               recipientStrategies, i_e, good_rep_num, stepNum,
+                               cooperate_times, reward_two_players, population);
     out.print("{}\n", log_line);
   }
 }
@@ -596,10 +547,10 @@ int main(int argc, char** argv) {
   //     由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
   //           // 4 * 4 的倍数
 
-  if (FLAGS_population % 16 != 0) {
-    cerr << "population must be a multiple of 16" << endl;
-    return 0;
-  }
+  // if (FLAGS_population % 16 != 0) {
+  //   cerr << "population must be a multiple of 16" << endl;
+  //   return 0;
+  // }
 
   // double s = 1;  // 费米函数参数
 
