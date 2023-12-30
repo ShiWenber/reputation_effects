@@ -15,6 +15,7 @@ class QTable {
   std::vector<std::vector<double>> table;
   //! int random number generator
   std::mt19937 gen;
+  std::uniform_real_distribution<double> randomDis;
 
  public:
   QTable(std::vector<std::string> rowNames, std::vector<std::string> colNames);
@@ -22,6 +23,8 @@ class QTable {
   QTable();
 
   ~QTable();
+
+  double getProbability();
 
   double loc(std::string rowName, std::string colName) const {
     return this->table[this->rowIndex.at(rowName)][this->colIndex.at(colName)];
@@ -34,9 +37,8 @@ class QTable {
   }
 
   std::pair<std::string, int> getBestOutput(std::string rowName);
-  
 
-
+  std::pair<std::string, int> getActionByBoltzmann(std::string const& rowName, double beta);
 
 
   std::vector<std::vector<double>> getTable() const { return this->table; }
@@ -51,6 +53,7 @@ class QTable {
   void setColIndex(const BiMap<std::string, int> &colIndex) { this->colIndex = colIndex; }
 
   void update(Transition const& transitions, double alpha, double discount);
+  void updateBoltzmann(Transition const& transitions, double alpha, double discount);
 
 };
 

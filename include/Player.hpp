@@ -187,7 +187,7 @@ class Player {
       const std::string &recipientReputation) const;
 
   // 通过 qTable 出动作
-  Action getActionFromQTable(const std::string &input);
+  Action getActionFromQTable(const std::string &input, double epsilon);
 
   void updateQTable(std::vector<Transition> const& transitions, double alpha,
                     double discount);

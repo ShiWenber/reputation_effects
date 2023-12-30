@@ -83,12 +83,8 @@ Action Player::donate(std::string const& recipientReputation, double epsilon,
                       double action_error_p, bool train) {
   Action resAction;
   if (train) {
-    if (this->getProbability() < epsilon) {
-      resAction = this->getRandomAction(this->actions);
-    } else {
-      // use qTable to get action
-      resAction = this->getActionFromQTable(recipientReputation);
-    }
+    // use qTable to get action (epsilon-greedy)
+    resAction = this->getActionFromQTable(recipientReputation, epsilon);
   } else {
     // use strategyTable to get action
     resAction = this->getActionFromStrategyTable(this->strategy.getName(),
@@ -112,12 +108,8 @@ Action Player::reward(std::string const& donorActionName, double epsilon,
                       double action_error_p, bool train) {
   Action resAction;
   if (train) {
-    if (this->getProbability() < epsilon) {
-      resAction = this->getRandomAction(this->actions);
-    } else {
-      // use qTable to get action
-      resAction = this->getActionFromQTable(donorActionName);
-    }
+    // use qTable to get action (epsilon-greedy)
+    resAction = this->getActionFromQTable(donorActionName, epsilon);
   } else {
     resAction = this->getActionFromStrategyTable(this->strategy.getName(),
                                                  donorActionName);
@@ -314,12 +306,15 @@ Action Player::getActionFromStrategyTable(const std::string& strategyName,
  * @param input  reputation / actionName
  * @return Action
  */
-Action Player::getActionFromQTable(const std::string& input) {
-  // the feature of C++ 17, structured binding
-  auto [actionName, actionId] = this->qTable.getBestOutput(input);
-  Action resAction(actionName, actionId);
-  assert(resAction.getName() != "");
-  return resAction;
+Action Player::getActionFromQTable(const std::string& input, double epsilon) {
+  if (this->getProbability() < epsilon) {
+    return this->getRandomAction(this->actions);
+  } else {
+    auto [actionName, actionId] = this->qTable.getBestOutput(input);
+    Action resAction(actionName, actionId);
+    assert(resAction.getName() != "");
+    return resAction;
+  }
 }
 
 Action Player::getRandomAction(std::vector<Action> const& alterActions) {
