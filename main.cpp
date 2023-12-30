@@ -161,14 +161,14 @@ double getCoopRate(
  * @param cooperate_times
  * @return string
  */
-string printStatistics(vector<Player>& donors,
-                       vector<Player>& recipients,
+string printStatistics(vector<Player>& donors, vector<Player>& recipients,
                        const vector<Strategy>& donorStrategies,
                        const vector<Strategy>& recipientStrategies, int i_e,
-                       int good_rep_num, int step_num, double cooperate_times, double reward_two_players, int population) {
+                       int good_rep_num, int step_num, double cooperate_times,
+                       double reward_two_players, int population) {
   string log_line = to_string(i_e);
 
-  double population_double = static_cast<double>(population);  
+  double population_double = static_cast<double>(population);
   // unordered_map<string, int> strategyPair2Num;
   unordered_map<string, int> strategyPair2Num;
   string key_str;
@@ -184,7 +184,8 @@ string printStatistics(vector<Player>& donors,
   for (Strategy donorS : donorStrategies) {
     for (Strategy recipientS : recipientStrategies) {
       key_str = donorS.getName() + "-" + recipientS.getName();
-      log_line += "," + to_string(strategyPair2Num[key_str] / population_double);
+      log_line +=
+          "," + to_string(strategyPair2Num[key_str] / population_double);
     }
   }
   log_line += "," + to_string(good_rep_num / static_cast<double>(population));
@@ -214,7 +215,8 @@ string printStatistics(vector<Player>& donors,
  */
 void func(int stepNum, int episode, int buffer_capacity, int batch_size,
           double alpha, double discount, int population, double s, int b,
-          int beta, int c, int gamma, double mu, double epsilon, int normId,
+          int beta, int c, int gamma, double mu, double epsilon,
+          double beta_boltzmann, bool with_boltzmann, int normId,
           int updateStepNum, double p0, string payoff_matrix_config_name,
           ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
@@ -243,7 +245,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
   rewardMatrix.updateVar("p", p0);
 
   rewardMatrix.evalRewardMatrix();
-  rewardMatrix.print();
+  // rewardMatrix.print();
 
   // initialize two players
   vector<Strategy> donorStrategies;
@@ -405,10 +407,10 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       Player& recipient = recipients[i_2];
 
       double reputation = recipient.getVarValue(REPUTATION_STR);
-      Action donor_action =
-          donor.donate(to_string((int)reputation), epsilon, 0.0, true);
-      Action recipient_action =
-          recipient.reward(donor_action.getName(), epsilon, 0.0, true);
+      Action donor_action = donor.donate(to_string((int)reputation), epsilon,
+                                         beta_boltzmann, 0.0, true);
+      Action recipient_action = recipient.reward(
+          donor_action.getName(), epsilon, beta_boltzmann, 0.0, true);
       double new_reputation =
           norm.getReputation(donor_action, recipient_action, 0.0);
       recipient.updateVar(REPUTATION_STR, new_reputation);
@@ -433,8 +435,8 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       reward_two_players += (donor_r + recipient_r);
 
       // should update the q table of donor? TODO: not update now
-      Action new_donor_action =
-          donor.donate(to_string((int)new_reputation), epsilon, 0.0, true);
+      Action new_donor_action = donor.donate(
+          to_string((int)new_reputation), epsilon, beta_boltzmann, 0.0, true);
 
       // buffer save the progress of the two players
       Transition do_transition(to_string(static_cast<int>(reputation)),
@@ -463,9 +465,9 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
         recipient.updateQTable(re_batch, alpha, discount);
       }
     }
-    const string & log_line = printStatistics(donors, recipients, donorStrategies,
-                               recipientStrategies, i_e, good_rep_num, stepNum,
-                               cooperate_times, reward_two_players, population);
+    const string& log_line = printStatistics(
+        donors, recipients, donorStrategies, recipientStrategies, i_e,
+        good_rep_num, stepNum, cooperate_times, reward_two_players, population);
     out.print("{}\n", log_line);
   }
 }
@@ -491,6 +493,8 @@ DEFINE_int32(logStep, 1, "the number of steps to log");
 DEFINE_int32(threads, 16, "the number of threads");
 DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error",
               "the name of payoff matrix config");
+DEFINE_bool(with_boltzmann, false, "whether use boltzmann distribution");
+DEFINE_double(beta_boltzmann, 0.1, "the parameter of boltzmann distribution");
 
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(
@@ -507,6 +511,7 @@ int main(int argc, char** argv) {
 #endif
 
   std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+  std::cout << "with_boltzmann: " << FLAGS_with_boltzmann << '\n';
 
   // record the running time
   system_clock::time_point start = chrono::system_clock::now();
@@ -592,9 +597,9 @@ int main(int argc, char** argv) {
       func(FLAGS_stepNum, FLAGS_episode, FLAGS_buffer_capacity,
            FLAGS_batch_size, FLAGS_alpha, FLAGS_discount, FLAGS_population,
            FLAGS_s, FLAGS_b, FLAGS_beta, FLAGS_c, FLAGS_gamma, FLAGS_mu,
-           FLAGS_epsilon, normId, FLAGS_updateStepNum, FLAGS_p0,
-           FLAGS_payoff_matrix_config_name, nullptr, false, &bars, true, normId,
-           FLAGS_logStep);
+           FLAGS_epsilon, FLAGS_beta_boltzmann, FLAGS_with_boltzmann, normId,
+           FLAGS_updateStepNum, FLAGS_p0, FLAGS_payoff_matrix_config_name,
+           nullptr, false, &bars, true, normId, FLAGS_logStep);
     });
   });
 

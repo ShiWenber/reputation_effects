@@ -53,17 +53,19 @@ class Player {
 
  public:
   Player(const Player &other);
-  Player(std::string const& name, int score, std::vector<Action> const& actions,
-               const std::vector<std::string>& rowNames,
-                        const std::vector<std::string>& colNames);
+  Player(std::string const &name, int score, std::vector<Action> const &actions,
+         const std::vector<std::string> &rowNames,
+         const std::vector<std::string> &colNames);
   ~Player();
 
   /** 根据输入返回一个动作，需要strategyTables */
   Action donate(std::string const &recipientReputation, double epsilon,
-                double action_error_p = 0,  bool train = false);
+                double beta_boltzmann, double action_error_p = 0,
+                bool train = false, bool with_boltzmann = false);
 
-  Action reward(std::string const &donorActionName, double epsilon, double action_error_p = 0,
-                bool train = false);
+  Action reward(std::string const &donorActionName, double epsilon,
+                double beta_boltzmann, double action_error_p = 0,
+                bool train = false, bool with_boltzmann = false);
 
   /**根据查询到的收益的delta值，更新分数*/
   void updateScore(double delta) {
@@ -187,15 +189,17 @@ class Player {
       const std::string &recipientReputation) const;
 
   // 通过 qTable 出动作
-  Action getActionFromQTable(const std::string &input, double epsilon);
+  Action getActionFromQTable(const std::string &input, double epsilon,
+                             double beta_boltzmann,
+                             bool with_boltzmann = false);
 
-  void updateQTable(std::vector<Transition> const& transitions, double alpha,
+  void updateQTable(std::vector<Transition> const &transitions, double alpha,
                     double discount);
 
   /**
    * @brief Get the Strategy Name From Q Table object
-   * 
-   * @return std::string 
+   *
+   * @return std::string
    */
   std::string getStrategyNameFromQTable(int player_type);
 };

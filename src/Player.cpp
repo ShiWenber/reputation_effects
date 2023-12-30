@@ -79,12 +79,13 @@ Player::~Player() {}
  * @param action_error_p The probability of action mutation
  * @return Action
  */
-Action Player::donate(std::string const& recipientReputation, double epsilon,
-                      double action_error_p, bool train) {
+Action Player::donate(std::string const& recipientReputation, double epsilon, double beta_boltzmann,
+                      double action_error_p, bool train, bool with_boltzmann) {
   Action resAction;
   if (train) {
     // use qTable to get action (epsilon-greedy)
-    resAction = this->getActionFromQTable(recipientReputation, epsilon);
+    resAction =
+        this->getActionFromQTable(recipientReputation, epsilon, beta_boltzmann, with_boltzmann);
   } else {
     // use strategyTable to get action
     resAction = this->getActionFromStrategyTable(this->strategy.getName(),
@@ -104,12 +105,13 @@ Action Player::donate(std::string const& recipientReputation, double epsilon,
   return resAction;
 }
 
-Action Player::reward(std::string const& donorActionName, double epsilon,
-                      double action_error_p, bool train) {
+Action Player::reward(std::string const& donorActionName, double epsilon, double beta_boltzmann,
+                      double action_error_p, bool train, bool with_boltzmann) {
   Action resAction;
   if (train) {
     // use qTable to get action (epsilon-greedy)
-    resAction = this->getActionFromQTable(donorActionName, epsilon);
+    resAction =
+        this->getActionFromQTable(donorActionName, epsilon, beta_boltzmann, with_boltzmann);
   } else {
     resAction = this->getActionFromStrategyTable(this->strategy.getName(),
                                                  donorActionName);
@@ -306,15 +308,25 @@ Action Player::getActionFromStrategyTable(const std::string& strategyName,
  * @param input  reputation / actionName
  * @return Action
  */
-Action Player::getActionFromQTable(const std::string& input, double epsilon) {
-  if (this->getProbability() < epsilon) {
-    return this->getRandomAction(this->actions);
+Action Player::getActionFromQTable(const std::string& input, double epsilon,
+                                   double beta_boltzmann, bool with_boltzmann) {
+  Action resAction;
+  if (with_boltzmann) {
+    auto [actionName, actionId] =
+        this->qTable.getActionByBoltzmann(input, beta_boltzmann);
+    resAction.setName(actionName);
+    resAction.setId(actionId);
   } else {
-    auto [actionName, actionId] = this->qTable.getBestOutput(input);
-    Action resAction(actionName, actionId);
-    assert(resAction.getName() != "");
-    return resAction;
+    if (this->getProbability() < epsilon) {
+      return this->getRandomAction(this->actions);
+    } else {
+      auto [actionName, actionId] = this->qTable.getBestOutput(input);
+      resAction.setName(actionName);
+      resAction.setId(actionId);
+    }
   }
+  assert(resAction.getName() != "");
+  return resAction;
 }
 
 Action Player::getRandomAction(std::vector<Action> const& alterActions) {
