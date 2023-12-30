@@ -343,6 +343,10 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
                           {"p0", p0},
                           {"payoffMatrix", payoff_matrix_config_name},
                           {"epsilon", epsilon},
+                          {"batch_size", batch_size},
+                          {"alpha", alpha},
+                          {"discount", discount},
+                          // q-learning with boltzmann
                           // not model parameters
                           {"other",
                            {
