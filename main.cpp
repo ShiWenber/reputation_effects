@@ -492,7 +492,7 @@ DEFINE_double(epsilon, 0.1, "the probability of mutation");
 DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
 DEFINE_double(p0, 1, "the probability of good reputation");
 DEFINE_int32(logStep, 1, "the number of steps to log");
-DEFINE_int32(threads, 16, "the number of threads");
+DEFINE_int32(threads, 8, "the number of threads");
 DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error",
               "the name of payoff matrix config");
 DEFINE_bool(with_boltzmann, false, "whether use boltzmann distribution");
