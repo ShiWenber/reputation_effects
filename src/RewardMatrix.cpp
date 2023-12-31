@@ -58,7 +58,7 @@ RewardMatrix::RewardMatrix(std::string csvPath) {
           std::stringstream players_ss(players);
           std::string playerName;
           while (std::getline(players_ss, playerName, ' ')) {
-            std::cout << playerName << std::endl;
+            // std::cout << playerName << std::endl;
             playerNum++;
           }
           // 读表达式变量，初始值为0

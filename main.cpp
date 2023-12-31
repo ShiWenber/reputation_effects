@@ -349,6 +349,8 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
                           {"alpha", alpha},
                           {"discount", discount},
                           // q-learning with boltzmann
+                          {"with_boltzmann", with_boltzmann},
+                          {"beta_boltzmann", beta_boltzmann},
                           // not model parameters
                           {"other",
                            {
@@ -408,9 +410,9 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
 
       double reputation = recipient.getVarValue(REPUTATION_STR);
       Action donor_action = donor.donate(to_string((int)reputation), epsilon,
-                                         beta_boltzmann, 0.0, true);
+                                         beta_boltzmann, 0.0, true, with_boltzmann);
       Action recipient_action = recipient.reward(
-          donor_action.getName(), epsilon, beta_boltzmann, 0.0, true);
+          donor_action.getName(), epsilon, beta_boltzmann, 0.0, true, with_boltzmann);
       double new_reputation =
           norm.getReputation(donor_action, recipient_action, 0.0);
       recipient.updateVar(REPUTATION_STR, new_reputation);
@@ -436,7 +438,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
 
       // should update the q table of donor? TODO: not update now
       Action new_donor_action = donor.donate(
-          to_string((int)new_reputation), epsilon, beta_boltzmann, 0.0, true);
+          to_string((int)new_reputation), epsilon, beta_boltzmann, 0.0, true, with_boltzmann);
 
       // buffer save the progress of the two players
       Transition do_transition(to_string(static_cast<int>(reputation)),
@@ -494,7 +496,7 @@ DEFINE_int32(threads, 16, "the number of threads");
 DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error",
               "the name of payoff matrix config");
 DEFINE_bool(with_boltzmann, false, "whether use boltzmann distribution");
-DEFINE_double(beta_boltzmann, 0.1, "the parameter of boltzmann distribution");
+DEFINE_double(beta_boltzmann, 2, "the parameter of boltzmann distribution");
 
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(
