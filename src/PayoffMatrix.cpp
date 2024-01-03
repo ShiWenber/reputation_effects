@@ -1,9 +1,9 @@
 #include "PayoffMatrix.hpp"
 
-#include <muParser.h>
-#include <algorithm>
 #include <assert.h>
+#include <muParser.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -97,7 +97,7 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
         }
         if (temp_playerNum != playerNum) {
           std::cerr << "not every cell has the same number of players's payoff"
-               << std::endl;
+                    << std::endl;
           throw "not every cell has the same number of players's payoff";
         }
         payoffMatrixRow.push_back(payoffList);
@@ -105,7 +105,7 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
       if (temp_colNum != colNum) {
         // 并不是每行都有相同的元素数量
         std::cerr << "not every row has the same number of elements"
-             << std::endl;
+                  << std::endl;
         throw "not every row has the same number of elements";
       }
       this->payoffMatrixStr.push_back(payoffMatrixRow);
@@ -131,10 +131,13 @@ PayoffMatrix::~PayoffMatrix() {}
  * 返回的第一个元素是动作A的实施者的收益，第二个元素是动作B的实施者的收益，这将会把原本payoffmatrix元素中的表达式的值计算出来
  * TODO: 完成输出值从string表达式到double的转换
  */
-std::vector<double> PayoffMatrix::getPayoff(const Strategy& strategyA,const Strategy& strategyB) const {
+std::vector<double> PayoffMatrix::getPayoff(const Strategy &strategyA,
+                                            const Strategy &strategyB) const {
   // strategyA必须来自行策略集，strategyB必须来自列策略集
-  assert(std::find(this->rowStrategies.begin(), this->rowStrategies.end(), strategyA) != this->rowStrategies.end());
-  assert(std::find(this->colStrategies.begin(), this->colStrategies.end(), strategyB) != this->colStrategies.end());
+  assert(std::find(this->rowStrategies.begin(), this->rowStrategies.end(),
+                   strategyA) != this->rowStrategies.end());
+  assert(std::find(this->colStrategies.begin(), this->colStrategies.end(),
+                   strategyB) != this->colStrategies.end());
   int idA = strategyA.getId();
   int idB = strategyB.getId();
   if (idA < this->rowStrategies.size() && idB < this->colStrategies.size()) {
@@ -146,7 +149,7 @@ std::vector<double> PayoffMatrix::getPayoff(const Strategy& strategyA,const Stra
 }
 
 /**
- * @brief 
+ * @brief
  * eval the expression in payoffMatrixStr and assign the value to payoffMatrix
  *
  * @return std::vector<std::vector<std::vector<double>>>
@@ -176,5 +179,65 @@ std::vector<std::vector<std::vector<double>>> PayoffMatrix::evalPayoffMatrix() {
   } catch (mu::Parser::exception_type &e) {
     std::cout << e.GetMsg() << std::endl;
   }
+  return this->payoffMatrix;
+}
+
+/**
+ * @brief
+ * eval the expression in payoffMatrixStr and assign the value to payoffMatrix
+ * for the special var you want to assign, you can input the var map as the
+ * parameter
+ *
+ * @return std::vector<std::vector<std::vector<double>>>
+ */
+std::vector<std::vector<std::vector<double>>> PayoffMatrix::evalPayoffMatrix(
+    std::map<std::string, double> const & vars_for_donor,
+    std::map<std::string, double> const & vars_for_receiver) {
+  this->payoffMatrix = std::vector<std::vector<std::vector<double>>>(
+      this->rowNum, std::vector<std::vector<double>>(
+                        this->colNum, std::vector<double>(this->playerNum)));
+  try {
+    mu::Parser p_donor;
+    for (auto it = this->vars.begin(); it != this->vars.end(); it++) {
+      // if var in vars_for_donor, use the value in vars_for_donor
+      if (vars_for_donor.find(it->first) != vars_for_donor.end()) {
+        p_donor.DefineConst(it->first, vars_for_donor.at(it->first));
+      } else {
+        p_donor.DefineConst(it->first, it->second);
+      }
+    }
+    int player_type = 0;
+    for (int row = 0; row < this->payoffMatrixStr.size(); row++) {
+      for (int col = 0; col < this->payoffMatrixStr[row].size(); col++) {
+        std::string payoffStrExp = this->payoffMatrixStr[row][col][player_type];
+        p_donor.SetExpr(payoffStrExp);
+        this->payoffMatrix[row][col][player_type] = p_donor.Eval();
+      }
+    }
+  } catch (mu::Parser::exception_type &e) {
+    std::cout << e.GetMsg() << std::endl;
+  }
+
+  try {
+    mu::Parser p_recipient;
+    for (auto it = this->vars.begin(); it != this->vars.end(); it++) {
+      if (vars_for_receiver.find(it->first) != vars_for_receiver.end()) {
+        p_recipient.DefineConst(it->first, vars_for_receiver.at(it->first));
+      } else {
+        p_recipient.DefineConst(it->first, it->second);
+      }
+    }
+    int player_type = 1;
+    for (int row = 0; row < this->payoffMatrixStr.size(); row++) {
+      for (int col = 0; col < this->payoffMatrixStr[row].size(); col++) {
+        std::string payoffStrExp = this->payoffMatrixStr[row][col][player_type];
+        p_recipient.SetExpr(payoffStrExp);
+        this->payoffMatrix[row][col][player_type] = p_recipient.Eval();
+      }
+    }
+  } catch (mu::Parser::exception_type &e) {
+    std::cout << e.GetMsg() << std::endl;
+  }
+
   return this->payoffMatrix;
 }

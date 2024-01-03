@@ -3,22 +3,36 @@
  * @author ShiWenber (1210169842@qq.com)
  * @brief the simulation of the evolution of cooperation based on the static
  * payoff matrix (combined the reputation and norm)
- * 
- * This is a conventional fermi update evolution model, the payoff matrix is considered under the circumstance of long term
- * 
+ *
+ * This is a conventional fermi update evolution model, the payoff matrix is
+ * considered under the circumstance of long term
+ *
  * cite:
- * 1. Pal, S., Hilbe, C., 2022. Reputation effects drive the joint evolution of cooperation and social rewarding. Nat. Commun. 13, 5928. https://doi.org/10.1038/s41467-022-33551-y
- * 2. Guo, H., Song, Z., Geček, S., Li, X., Jusup, M., Perc, M., Moreno, Y., Boccaletti, S., Wang, Z., 2020. A novel route to cyclic dominance in voluntary social dilemmas. Journal of The Royal Society Interface 17, 20190789. https://doi.org/10.1098/rsif.2019.0789
- * 
- * but we have a change. To characterize the dynamic of reputation of the recipient, we should make the game actually played after the imitation done.
- * which means little change of reputation distribution will take place in each step with strategy distribution changed.
- * 1. Focal player imitated the rolemodel considered that the rolemodel will have a higher payoff than the focal player.
- * 2. Focal player immediately play the game with a random select neighbor using the new strategy.
+ * 1. Pal, S., Hilbe, C., 2022. Reputation effects drive the joint evolution of
+ * cooperation and social rewarding. Nat. Commun. 13, 5928.
+ * https://doi.org/10.1038/s41467-022-33551-y
+ * 2. Guo, H., Song, Z., Geček, S., Li, X., Jusup, M., Perc, M., Moreno, Y.,
+ * Boccaletti, S., Wang, Z., 2020. A novel route to cyclic dominance in
+ * voluntary social dilemmas. Journal of The Royal Society Interface 17,
+ * 20190789. https://doi.org/10.1098/rsif.2019.0789
+ *
+ * but we have a change. To characterize the dynamic of reputation of the
+ * recipient, we should make the game actually played after the imitation done.
+ * which means little change of reputation distribution will take place in each
+ * step with strategy distribution changed.
+ * 1. Focal player imitated the rolemodel considered that the rolemodel will
+ * have a higher payoff than the focal player.
+ * 2. Focal player immediately play the game with a random select neighbor using
+ * the new strategy.
  * 3. The reputation distribution will be updated according to the game result.
- * 4. During the next step, a new focal player will imitate a new rolemodel under the new reputation distribution.
- * 
- * It is should be noted that the reputation distribution's dynamic just influence the players only thinking in short term, instead of the players who have a long term thinking(They only consider the stability of the reputation distribution).
- * 
+ * 4. During the next step, a new focal player will imitate a new rolemodel
+ * under the new reputation distribution.
+ *
+ * It is should be noted that the reputation distribution's dynamic just
+ * influence the players only thinking in short term, instead of the players who
+ * have a long term thinking(They only consider the stability of the reputation
+ * distribution).
+ *
  * @version 0.1
  * @date 2023-09-12
  *
@@ -130,7 +144,7 @@ double getCoopRate(
     } else if (do_stg_name == "DISC") {
       // 如果好人中有DISC存在，那么乘 good_rep_num - 1 否则 乘 good_rep_num
       //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘
-      ///good_rep_num - 1
+      /// good_rep_num - 1
 
       temp_sum +=
           donorIdSet.size() * good_rep_num;  // error, should reduce the number
@@ -159,14 +173,14 @@ double getCoopRate(
 
 /**
  * @brief Get the Avg Payoff object
- * 
- * @param donorStrategy 
- * @param recipientStrategy 
- * @param payoffMatrix 
- * @param strategyName2donorId 
- * @param strategyName2recipientId 
- * @param population 
- * @return double 
+ *
+ * @param donorStrategy
+ * @param recipientStrategy
+ * @param payoffMatrix
+ * @param strategyName2donorId
+ * @param strategyName2recipientId
+ * @param population
+ * @return double
  */
 double getAvgPayoff(
     const Strategy& donorStrategy, const Strategy& recipientStrategy,
@@ -237,7 +251,6 @@ string printStatistics(
            << recipient.getVarValue(REPUTATION_STR) << endl;
       throw "reputation value error";
     }
-    
   }
   assert(reputation2Id["1"].size() == good_rep_num);
   assert(reputation2Id["1"].size() + reputation2Id["0"].size() == population);
@@ -285,7 +298,7 @@ string printStatistics(
                                  population_double);
     }
 
-    logLine += "," + to_string(reputation2Id["1"].size()/ population_double);
+    logLine += "," + to_string(reputation2Id["1"].size() / population_double);
     double coop_rate =
         getCoopRate(strategyName2DonorId, strategyName2RecipientId, population,
                     reputation2Id);
@@ -294,40 +307,39 @@ string printStatistics(
   return logLine;
 }
 
-
 /**
  * @brief evolution process
- * 
- * @param stepNum 
- * @param population 
- * @param s 
- * @param b 
- * @param beta 
- * @param c 
- * @param gamma 
- * @param mu 
- * @param normId 
- * @param updateStepNum 
- * @param p0 
- * @param payoff_matrix_config_name 
- * @param bar 
- * @param turn_up_progress_bar 
- * @param dynamic_bar 
- * @param turn_up_dynamic_bar 
- * @param dynamic_bar_id 
- * @param log_step 
+ *
+ * @param stepNum
+ * @param population
+ * @param s
+ * @param b
+ * @param beta
+ * @param c
+ * @param gamma
+ * @param mu
+ * @param normId
+ * @param updateStepNum
+ * @param p0
+ * @param payoff_matrix_config_name
+ * @param bar
+ * @param turn_up_progress_bar
+ * @param dynamic_bar
+ * @param turn_up_dynamic_bar
+ * @param dynamic_bar_id
+ * @param log_step
  */
 void func(int stepNum, int population, double s, int b, int beta, int c,
-          int gamma, double mu, int normId, int updateStepNum, double p0, string payoff_matrix_config_name,
-          ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
+          int gamma, double mu, int normId, int updateStepNum, double p0,
+          string payoff_matrix_config_name, ProgressBar* bar = nullptr,
+          bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
           int log_step = 1) {
-
   string normName = "norm" + to_string(normId);
 
-  PayoffMatrix payoffMatrix("./payoffMatrix/" + payoff_matrix_config_name + "/" + "PayoffMatrix" + to_string(normId) +
-                            ".csv");
+  PayoffMatrix payoffMatrix("./payoffMatrix/" + payoff_matrix_config_name +
+                            "/" + "PayoffMatrix" + to_string(normId) + ".csv");
 
   // assign vars
   payoffMatrix.updateVar("b", b);
@@ -336,7 +348,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   payoffMatrix.updateVar("gamma", gamma);
   payoffMatrix.updateVar("p", p0);
 
-  payoffMatrix.evalPayoffMatrix();
+  payoffMatrix.evalPayoffMatrix();  // TODO: remove this line
 
   // initialize two players
   vector<Action> donorActions;
@@ -358,7 +370,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   recipient_temp.setStrategies(recipientStrategies);
 
   recipient_temp.loadStrategy("./strategy");
-  // fmt::print("recipientStrategies: {}\n", recipient_temp.getStrategyTables());
+  // fmt::print("recipientStrategies: {}\n",
+  // recipient_temp.getStrategyTables());
   recipient_temp.setStrategy("NR");
 
   // initialize recipient_temp's reputation
@@ -414,13 +427,15 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   vector<int> donor_stra_id;
   vector<int> recipient_stra_id;
   for (int i = 0; i < donorStrategies.size(); i++) {
-    donor_stra_id.insert(donor_stra_id.end(),
-                         population / static_cast<double>(donorStrategies.size()), i);
+    donor_stra_id.insert(
+        donor_stra_id.end(),
+        population / static_cast<double>(donorStrategies.size()), i);
     for (int j = 0; j < recipientStrategies.size(); j++) {
-      recipient_stra_id.insert(recipient_stra_id.end(),
-                               (population / static_cast<double>(donorStrategies.size())) /
-                                   static_cast<double>(recipientStrategies.size()),
-                               j);
+      recipient_stra_id.insert(
+          recipient_stra_id.end(),
+          (population / static_cast<double>(donorStrategies.size())) /
+              static_cast<double>(recipientStrategies.size()),
+          j);
     }
   }
   assert(donor_stra_id.size() == population &&
@@ -457,26 +472,23 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     filesystem::create_directory(log_dir);
   }
 
-  const json::value jv =
-  { {"stepNum", stepNum},
-    {"population", population},
-    {"s", s},
-    {"b", b},
-    {"beta", beta},
-    {"c", c},
-    {"gamma", gamma},
-    {"mu", mu},
-    {"normId", normId},
-    {"p0", p0},
-    {"payoffMatrix", payoff_matrix_config_name},
-    // not model parameters
-    {"other",
-     {
-         {"updateStepNum", updateStepNum},
-         {"logStep", log_step},
-     }
-    }
-  };
+  const json::value jv = {{"stepNum", stepNum},
+                          {"population", population},
+                          {"s", s},
+                          {"b", b},
+                          {"beta", beta},
+                          {"c", c},
+                          {"gamma", gamma},
+                          {"mu", mu},
+                          {"normId", normId},
+                          {"p0", p0},
+                          {"payoffMatrix", payoff_matrix_config_name},
+                          // not model parameters
+                          {"other",
+                           {
+                               {"updateStepNum", updateStepNum},
+                               {"logStep", log_step},
+                           }}};
 
   string log_file_path = logJson(log_dir, jv);
 
@@ -498,9 +510,10 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
   out.print("{}\n", line);
 
-  string logLine = printStatistics(
-      donors, recipients, donorStrategies, recipientStrategies,
-      strategyName2DonorId, strategyName2RecipientId, population, 0, false, good_rep_num);
+  string logLine =
+      printStatistics(donors, recipients, donorStrategies, recipientStrategies,
+                      strategyName2DonorId, strategyName2RecipientId,
+                      population, 0, false, good_rep_num);
   out.print("{}\n", logLine);
 
   uniform_int_distribution<int> dis(0, population - 1);
@@ -530,11 +543,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     while (focal_i == rolemodel_i) {
       focal_i = dis(gen_don);
       rolemodel_i = dis(gen_rec);
-    }
-    // if payoff_matrix_config_name == "payoffMatrix_shortterm", then eval the whole payoffMatrix according to the current reputation distribution
-    if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
-      payoffMatrix.updateVar("p", static_cast<double>(good_rep_num) / population);
-      payoffMatrix.evalPayoffMatrix();
     }
 
     // mutation probability to explore other strategies randomly
@@ -566,12 +574,47 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       Strategy rolemodel_donorStrategy = donors[rolemodel_i].getStrategy();
       Strategy rolemodel_recipientStrategy =
           recipients[rolemodel_i].getStrategy();
+
+      // if payoff_matrix_config_name == "payoffMatrix_shortterm", then eval the
+      // whole payoffMatrix according to the current reputation distribution
+      map<string, double> vars_for_recipient = {
+          {"p", recipients[rolemodel_i].getVarValue(REPUTATION_STR)}};
+      if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
+        payoffMatrix.updateVar("p",
+                               static_cast<double>(good_rep_num) / population);
+        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+      } else if (payoff_matrix_config_name ==
+                 "payoffMatrix_longterm_no_norm_error") {
+        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+      } else {
+        cerr << "payoff_matrix_config_name error: "
+             << payoff_matrix_config_name << endl;
+             throw "payoff_matrix_config_name error";
+      }
+
       double rolemodel_payoff = getAvgPayoff(
           rolemodel_donorStrategy, rolemodel_recipientStrategy, payoffMatrix,
           strategyName2DonorId, strategyName2RecipientId, population);
 
       Strategy focul_donorStrategy = donors[focal_i].getStrategy();
       Strategy focul_recipientStrategy = recipients[focal_i].getStrategy();
+
+      // TODO: 优化
+      vars_for_recipient = {
+          {"p", recipients[focal_i].getVarValue(REPUTATION_STR)}};
+      if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
+        payoffMatrix.updateVar("p",
+                               static_cast<double>(good_rep_num) / population);
+        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+      } else if (payoff_matrix_config_name ==
+                 "payoffMatrix_longterm_no_norm_error") {
+        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+      } else {
+        cerr << "payoff_matrix_config_name error: "
+             << payoff_matrix_config_name << endl;
+             throw "payoff_matrix_config_name error";
+      }
+
       double focul_payoff = getAvgPayoff(
           focul_donorStrategy, focul_recipientStrategy, payoffMatrix,
           strategyName2DonorId, strategyName2RecipientId, population);
@@ -592,7 +635,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       }
     }
 
-    // focal player play the game with a random select neighbor k using the new strategy
+    // focal player play the game with a random select neighbor k using the new
+    // strategy
     int k = dis(gen_don);
     while (k == focal_i) {
       k = dis(gen_don);
@@ -614,17 +658,17 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     }
 
     double reputation = recipient->getVarValue(REPUTATION_STR);
-    Action donor_action = donor->donate(to_string((int) reputation), 0.0);
+    Action donor_action = donor->donate(to_string((int)reputation), 0.0);
     Action recipient_action = recipient->reward(donor_action.getName(), 0.0);
-    double new_reputation = norm.getReputation(donor_action, recipient_action, 0.0);
+    double new_reputation =
+        norm.getReputation(donor_action, recipient_action, 0.0);
     recipient->updateVar(REPUTATION_STR, new_reputation);
     if (reputation != new_reputation) {
-      if (reputation == 0.0)
-      {
-      // good -> bad
+      if (reputation == 0.0) {
+        // good -> bad
         good_rep_num++;
       } else if (reputation == 1.0) {
-      // bad -> good
+        // bad -> good
         good_rep_num--;
       } else {
         cerr << "reputation value error: " << reputation << endl;
@@ -641,7 +685,6 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                                 false, good_rep_num));
     }
   }
-  
 }
 
 DEFINE_int32(stepNum, 1000, "the number of steps");
@@ -657,7 +700,8 @@ DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
 DEFINE_double(p0, 1, "the probability of good reputation");
 DEFINE_int32(logStep, 1, "the number of steps to log");
 DEFINE_int32(threads, 11, "the number of threads");
-DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error", "the name of payoff matrix config");
+DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error",
+              "the name of payoff matrix config");
 
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(
@@ -705,7 +749,8 @@ int main(int argc, char** argv) {
                                     bar7, bar8, bar9, bar10, bar11, bar12,
                                     bar13, bar14, bar15);
 
-  // Because the same number of strategy pairs is set during initialization, population must be a multiple of 16 (4 * 4)
+  // Because the same number of strategy pairs is set during initialization,
+  // population must be a multiple of 16 (4 * 4)
   if (FLAGS_population % 16 != 0) {
     cerr << "population must be a multiple of 16" << endl;
     return 0;
@@ -734,8 +779,8 @@ int main(int argc, char** argv) {
     tbb::parallel_for(0, 16, [&](int normId) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
-           FLAGS_p0, FLAGS_payoff_matrix_config_name,
-             nullptr, false, &bars, true, normId, FLAGS_logStep);
+           FLAGS_p0, FLAGS_payoff_matrix_config_name, nullptr, false, &bars,
+           true, normId, FLAGS_logStep);
     });
   });
 

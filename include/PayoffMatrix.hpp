@@ -40,6 +40,7 @@ class PayoffMatrix {
   double getVarValue(const std::string &varName) const { return this->vars.at(varName); }
 
   std::vector<std::vector<std::vector<double>>> evalPayoffMatrix();
+  std::vector<std::vector<std::vector<double>>> evalPayoffMatrix( std::map<std::string, double> const & vars_for_donor, std::map<std::string, double> const & vars_for_receiver);
 
   int getRowNum() const { return this->rowNum; }
 
