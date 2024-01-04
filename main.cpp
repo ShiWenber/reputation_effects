@@ -438,10 +438,14 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       double recipient_r = rewards[1];
       reward_two_players += (donor_r + recipient_r);
 
-      // should update the q table of donor? TODO: this is direct reciprocity
-      // not the indirect reciprocity
+      // not the indirect reciprocity, we random select a player to interact with the recipient whose reputation is updated
+      // and i_3 can't be same with i_2
+      int i_3 = dis(gen_don);
+      while (i_3 == i_2) {
+        i_3 = dis(gen_don);
+      }
       Action new_donor_action =
-          donor.donate(to_string((int)new_reputation), epsilon, beta_boltzmann,
+          donors[i_3].donate(to_string((int)new_reputation), epsilon, beta_boltzmann,
                        0.0, true, with_boltzmann);
 
       // buffer save the progress of the two players
