@@ -409,10 +409,12 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       Player& recipient = recipients[i_2];
 
       double reputation = recipient.getVarValue(REPUTATION_STR);
-      Action donor_action = donor.donate(to_string((int)reputation), epsilon,
-                                         beta_boltzmann, 0.0, true, with_boltzmann);
-      Action recipient_action = recipient.reward(
-          donor_action.getName(), epsilon, beta_boltzmann, 0.0, true, with_boltzmann);
+      Action donor_action =
+          donor.donate(to_string((int)reputation), epsilon, beta_boltzmann, 0.0,
+                       true, with_boltzmann);
+      Action recipient_action =
+          recipient.reward(donor_action.getName(), epsilon, beta_boltzmann, 0.0,
+                           true, with_boltzmann);
       double new_reputation =
           norm.getReputation(donor_action, recipient_action, 0.0);
       recipient.updateVar(REPUTATION_STR, new_reputation);
@@ -436,9 +438,11 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       double recipient_r = rewards[1];
       reward_two_players += (donor_r + recipient_r);
 
-      // should update the q table of donor? TODO: not update now
-      Action new_donor_action = donor.donate(
-          to_string((int)new_reputation), epsilon, beta_boltzmann, 0.0, true, with_boltzmann);
+      // should update the q table of donor? TODO: this is direct reciprocity
+      // not the indirect reciprocity
+      Action new_donor_action =
+          donor.donate(to_string((int)new_reputation), epsilon, beta_boltzmann,
+                       0.0, true, with_boltzmann);
 
       // buffer save the progress of the two players
       Transition do_transition(to_string(static_cast<int>(reputation)),
@@ -452,7 +456,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       buffer.add(1, i_2, re_transition);
 
       // TODO: just donor C or donor-recipient all C
-      if (donor_action.getName() == "C" && recipient_action.getName() == "C") {
+      if (donor_action.getName() == "C") {
         cooperate_times++;
       }
 
@@ -467,10 +471,13 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
         recipient.updateQTable(re_batch, alpha, discount);
       }
     }
-    const string& log_line = printStatistics(
-        donors, recipients, donorStrategies, recipientStrategies, i_e,
-        good_rep_num, stepNum, cooperate_times, reward_two_players, population);
-    out.print("{}\n", log_line);
+    if (i_e % log_step == 0) {
+      const string& log_line =
+          printStatistics(donors, recipients, donorStrategies,
+                          recipientStrategies, i_e, good_rep_num, stepNum,
+                          cooperate_times, reward_two_players, population);
+      out.print("{}\n", log_line);
+    }
   }
 }
 
