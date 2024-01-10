@@ -130,45 +130,46 @@ double fermi(double payoff_current, double payoff_new, double s) {
 double getCoopRate(
     const unordered_map<string, set<int>>& strategyName2donorId,
     const unordered_map<string, set<int>>& strategyName2recipientId,
-    const int& population,
-    const unordered_map<string, set<int>>& reputation2Id) {
+    const int population,
+    const unordered_map<string, set<int>>& reputation2Id, const vector<Player>& donors, const vector<Player>& recipients) {
   double temp_sum = 0;
-  const int& n = population;
+  const int n = population;
   int good_rep_num = reputation2Id.at("1").size();
 
-  for (auto& [do_stg_name, donorIdSet] : strategyName2donorId) {
+  for (auto& [do_stg_name, donor_id_set] : strategyName2donorId) {
     if (do_stg_name == "C") {
-      temp_sum += donorIdSet.size() * (n - 1);
+      temp_sum += donor_id_set.size() * (n - 1);
     } else if (do_stg_name == "D") {
       // do nothing
     } else if (do_stg_name == "DISC") {
-      // 如果好人中有DISC存在，那么乘 good_rep_num - 1 否则 乘 good_rep_num
-      //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘
-      /// good_rep_num - 1
-
-      temp_sum +=
-          donorIdSet.size() * good_rep_num;  // error, should reduce the number
-                                             // of "DISC" in good_rep_num
+      // record the number of people with reputation 1 in disc
+      int good_rep_in_disc = 0;
+      for (const auto& id: donor_id_set) {
+        if (recipients[id].getVarValue(REPUTATION_STR) == 1.0) {
+          good_rep_in_disc++;
+        }
+      }
+      // the good rep in disc will not encounter themselves, so they cooperate with good_rep_num - 1 people. The bad rep in disc will encounter good_rep_num people
+      temp_sum += good_rep_in_disc * (good_rep_num - 1) + (donor_id_set.size() - good_rep_in_disc) * good_rep_num;
     } else if (do_stg_name == "NDISC") {
-      // temp_sum += strategyName2donorId.at(do_stg_name).size() * (n - 1);
-      temp_sum += donorIdSet.size() * (n - good_rep_num);
+      // record the number of people with reputation 0 in disc
+      // TODO: ndisc / adisc
+      int bad_rep_in_ndisc = 0;
+      for (const auto& id: donor_id_set) {
+        if (recipients[id].getVarValue(REPUTATION_STR) == 0.0) {
+          bad_rep_in_ndisc++;
+        }
+      }
+      temp_sum += bad_rep_in_ndisc * (n - good_rep_num - 1) + (donor_id_set.size() - bad_rep_in_ndisc) * (n - good_rep_num);
     } else {
       cerr << "not support strategy name: " << do_stg_name << endl;
       throw "not support strategy name";
     }
-
-    for (auto& [strategyName, recipientIdSet] : strategyName2recipientId) {
-      for (auto& donorId : donorIdSet) {
-        for (auto& recipientId : recipientIdSet) {
-          if (donorId != recipientId) {
-            temp_sum += 1;
-          }
-        }
-      }
-    }
   }
+  double res = temp_sum / (n * (n - 1));
+  assert(res >= 0 && res <= 1);
 
-  return temp_sum / (n * (n - 1));
+  return res;
 }
 
 /**
@@ -204,6 +205,7 @@ double getAvgPayoff(
   }
   return (1.0 / (population - 1)) * (eval_donor + eval_recipient - eval_same);
 }
+
 
 /**
  * @brief  统计每个策略对的人数同时可以生成log行:
@@ -301,7 +303,7 @@ string printStatistics(
     logLine += "," + to_string(reputation2Id["1"].size() / population_double);
     double coop_rate =
         getCoopRate(strategyName2DonorId, strategyName2RecipientId, population,
-                    reputation2Id);
+                    reputation2Id, donors, recipients);
     logLine += "," + to_string(coop_rate);
   }
   return logLine;
