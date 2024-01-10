@@ -15,7 +15,8 @@
 
 class Player {
   /** 利用静态变量的特性来维护公共信息，数据类型为map，key为string，value 为
-   * double */
+   * double 
+   */
  private:
   static std::map<std::string, double> commonInfo;
 
