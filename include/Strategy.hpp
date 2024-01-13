@@ -5,8 +5,8 @@
 
 class Strategy {
  private:
-  std::string name;  //< 行动名称
-  int id;            //< 行动id
+  std::string name;
+  int id;
  public:
 
  // overload operator
