@@ -1,4 +1,8 @@
 {
     "commentTranslate.targetLanguage": "en",
-    "commentTranslate.source": "DarkCWK.youdao-youdao"
+    "commentTranslate.source": "DarkCWK.youdao-youdao",
+    "files.associations": {
+        "functional": "cpp",
+        "type_traits": "cpp"
+    }
 }

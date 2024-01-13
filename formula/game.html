@@ -14922,8 +14922,8 @@ $\displaystyle \left( \left[\begin{matrix}\beta - c &amp; - c\\\beta &amp; 0\end
 <p>A donor chooses whether to cooperate according to the reputation state $s$ of the recipient $\pi^{do} (s) = action^{do}$, and the recipient chooses whether to cooperate according to the donor's behavior towards himself $\pi^{re} (action^{do}) = action^{re}$</p>
 <p>因此，对于 donor 和 recipient 都有四种可能的策略，$\pi_k^i, i \in \{do, re\} \land k \in \{1, 2, 3, 4\}$</p>
 <p>Therefore, there are four possible strategies for both the donor and the recipient, $\pi_k^i, i \in \{do, re\} \land k \in \{1, 2, 3, 4\}$</p>
-<p>对 donor，存在策略：总是合作$C=\pi_1^{do}$；对手声誉好就合作，对手声誉差就背叛$DISC=\pi_2^{do}$；对手声誉好就背叛，对手声誉差就合作$NDISC=\pi_3^{do}$，总是背叛$D=\pi_4^{do}$</p>
-<p>For the donor, there are strategies: always cooperate $C=\pi_1^{do}$; cooperate if the opponent's reputation is good, defect if the opponent's reputation is bad $DISC=\pi_2^{do}$; defect if the opponent's reputation is good, cooperate if the opponent's reputation is bad $NDISC=\pi_3^{do}$, always defect $D=\pi_4^{do}$.</p>
+<p>对 donor，存在策略：总是合作$C=\pi_1^{do}$；对手声誉好就合作，对手声誉差就背叛$DISC=\pi_2^{do}$；对手声誉好就背叛，对手声誉差就合作$ADISC=\pi_3^{do}$，总是背叛$D=\pi_4^{do}$</p>
+<p>For the donor, there are strategies: always cooperate $C=\pi_1^{do}$; cooperate if the opponent's reputation is good, defect if the opponent's reputation is bad $DISC=\pi_2^{do}$; defect if the opponent's reputation is good, cooperate if the opponent's reputation is bad $ADISC=\pi_3^{do}$, always defect $D=\pi_4^{do}$.</p>
 <p>C:</p>
 <table>
 <thead><tr>
@@ -14956,7 +14956,7 @@ $\displaystyle \left( \left[\begin{matrix}\beta - c &amp; - c\\\beta &amp; 0\end
 </tr>
 </tbody>
 </table>
-<p>NDISC:</p>
+<p>ADISC:</p>
 <table>
 <thead><tr>
 <th style="text-align:left">$re$'s reputation</th>
@@ -15093,20 +15093,20 @@ $$
     <span class="n">STG_FUNC</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">'C'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'C'</span><span class="p">,</span>
         <span class="s1">'DISC'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'C'</span> <span class="k">if</span> <span class="nb">input</span> <span class="o">==</span> <span class="s1">'1'</span> <span class="k">else</span> <span class="s1">'D'</span><span class="p">,</span>
-        <span class="s1">'NDISC'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'D'</span> <span class="k">if</span> <span class="nb">input</span> <span class="o">==</span> <span class="s1">'1'</span> <span class="k">else</span> <span class="s1">'C'</span><span class="p">,</span>
+        <span class="s1">'ADISC'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'D'</span> <span class="k">if</span> <span class="nb">input</span> <span class="o">==</span> <span class="s1">'1'</span> <span class="k">else</span> <span class="s1">'C'</span><span class="p">,</span>
         <span class="s1">'D'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'D'</span><span class="p">,</span>
         <span class="s1">'NR'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'D'</span><span class="p">,</span>
         <span class="s1">'SR'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'C'</span> <span class="k">if</span> <span class="nb">input</span> <span class="o">==</span> <span class="s1">'C'</span> <span class="k">else</span> <span class="s1">'D'</span><span class="p">,</span>
         <span class="s1">'AR'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'D'</span> <span class="k">if</span> <span class="nb">input</span> <span class="o">==</span> <span class="s1">'C'</span> <span class="k">else</span> <span class="s1">'C'</span><span class="p">,</span>
         <span class="s1">'UR'</span><span class="p">:</span> <span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="s1">'C'</span>
     <span class="p">}</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stg_name</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'NDISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">,</span> <span class="s1">'NR'</span><span class="p">,</span> <span class="s1">'SR'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="s1">'UR'</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">stg_name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'NDISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">,</span> <span class="s1">'NR'</span><span class="p">,</span> <span class="s1">'SR'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="s1">'UR'</span><span class="p">},</span> <span class="s2">"stg_name must be 'C', 'DISC', 'NDISC', 'D', 'NR', 'SR', 'AR', 'UR'"</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stg_name</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'ADISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">,</span> <span class="s1">'NR'</span><span class="p">,</span> <span class="s1">'SR'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="s1">'UR'</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">stg_name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'ADISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">,</span> <span class="s1">'NR'</span><span class="p">,</span> <span class="s1">'SR'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="s1">'UR'</span><span class="p">},</span> <span class="s2">"stg_name must be 'C', 'DISC', 'ADISC', 'D', 'NR', 'SR', 'AR', 'UR'"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stg_name</span> <span class="o">=</span> <span class="n">stg_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">STG_FUNC</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stg_name</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">,</span> <span class="s1">'0'</span><span class="p">,</span> <span class="s1">'1'</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stg_name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'NDISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">}:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stg_name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'ADISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">}:</span>
             <span class="k">assert</span> <span class="nb">input</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'0'</span><span class="p">,</span> <span class="s1">'1'</span><span class="p">},</span> <span class="s2">"donor strategy's input must be '1' or '0'"</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stg_name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'NR'</span><span class="p">,</span> <span class="s1">'SR'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="s1">'UR'</span><span class="p">}:</span>
             <span class="k">assert</span> <span class="nb">input</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">},</span> <span class="s2">"receiver strategy's input must be 'C' or 'D'"</span>
@@ -15120,8 +15120,8 @@ $$
 <span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'C'</span><span class="p">)[</span><span class="s1">'1'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'C'</span>
 <span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'DISC'</span><span class="p">)[</span><span class="s1">'0'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span>
 <span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'DISC'</span><span class="p">)[</span><span class="s1">'1'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'C'</span>
-<span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'NDISC'</span><span class="p">)[</span><span class="s1">'0'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'C'</span>
-<span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'NDISC'</span><span class="p">)[</span><span class="s1">'1'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span>
+<span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'ADISC'</span><span class="p">)[</span><span class="s1">'0'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'C'</span>
+<span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'ADISC'</span><span class="p">)[</span><span class="s1">'1'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span>
 <span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'D'</span><span class="p">)[</span><span class="s1">'0'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span>
 <span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'D'</span><span class="p">)[</span><span class="s1">'1'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span>
 <span class="k">assert</span> <span class="n">Stg</span><span class="p">(</span><span class="s1">'NR'</span><span class="p">)[</span><span class="s1">'C'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span>
@@ -15244,7 +15244,7 @@ $$
 <span class="n">T</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([[</span><span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="sa">r</span><span class="s2">"T_</span><span class="si">{00}</span><span class="s2">"</span><span class="p">),</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="sa">r</span><span class="s2">"T_</span><span class="si">{01}</span><span class="s2">"</span><span class="p">)],</span> <span class="p">[</span><span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="sa">r</span><span class="s2">"T_</span><span class="si">{10}</span><span class="s2">"</span><span class="p">),</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Symbol</span><span class="p">(</span><span class="sa">r</span><span class="s2">"T_</span><span class="si">{11}</span><span class="s2">"</span><span class="p">)]])</span>
 <span class="n">s0_dis</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
 <span class="n">s1_dis</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
-<span class="n">do_stg_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'NDISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">]</span>
+<span class="n">do_stg_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'C'</span><span class="p">,</span> <span class="s1">'DISC'</span><span class="p">,</span> <span class="s1">'ADISC'</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">]</span>
 <span class="n">re_stg_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'NR'</span><span class="p">,</span> <span class="s1">'SR'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="s1">'UR'</span><span class="p">]</span>
 <span class="n">do_stgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Stg</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">do_stg_names</span><span class="p">]</span>
 <span class="n">re_stgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Stg</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">re_stg_names</span><span class="p">]</span>
@@ -16225,7 +16225,7 @@ $\displaystyle \left( \left[\begin{matrix}- c &amp; b\\- c &amp; b\end{matrix}\r
         <span class="n">res_pi</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([[</span><span class="n">solution</span><span class="p">[</span><span class="n">pi0</span><span class="p">],</span> <span class="n">solution</span><span class="p">[</span><span class="n">pi1</span><span class="p">]]])</span>
 
     <span class="k">return</span> <span class="n">res_pi</span>
-<span class="n">get_stable</span><span class="p">(</span><span class="n">trs</span><span class="p">[</span><span class="s1">'NDISC'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="mi">10</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">P0</span><span class="p">)</span>
+<span class="n">get_stable</span><span class="p">(</span><span class="n">trs</span><span class="p">[</span><span class="s1">'ADISC'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="mi">10</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">P0</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -16288,7 +16288,7 @@ $\displaystyle \left[\begin{matrix}1 - p &amp; p\end{matrix}\right]$
     <span class="n">v1_2</span> <span class="o">=</span> <span class="n">v1_2</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">v1_2</span>
 
-<span class="n">value_stable</span><span class="p">(</span><span class="o">*</span><span class="n">trs</span><span class="p">[</span><span class="s1">'NDISC'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">P0</span><span class="p">)</span>
+<span class="n">value_stable</span><span class="p">(</span><span class="o">*</span><span class="n">trs</span><span class="p">[</span><span class="s1">'ADISC'</span><span class="p">,</span> <span class="s1">'AR'</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">P0</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -16362,7 +16362,7 @@ $\displaystyle \left[\begin{matrix}\beta p + c \left(p - 1\right) &amp; - b p + 
 <span class="c1"># Donor Recipient:b c beta gamma lambda p,NR,SR,AR,UR</span>
 <span class="c1"># C,-c:b,beta-c:b-gamma,-c:b,beta-c:b-gamma</span>
 <span class="c1"># DISC,0:0,p*(beta-c):p*(b-gamma),(beta-c)/2:(b-gamma)/2,beta-c:b-gamma</span>
-<span class="c1"># NDISC,-c:b,(beta-c)/2:(b-gamma)/2,(1-p)*(-c)+p*beta:(1-p)*b+p*(-gamma),beta:-gamma</span>
+<span class="c1"># ADISC,-c:b,(beta-c)/2:(b-gamma)/2,(1-p)*(-c)+p*beta:(1-p)*b+p*(-gamma),beta:-gamma</span>
 <span class="c1"># D,0:0,0:0,beta:-gamma,beta:-gamma</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
@@ -16570,7 +16570,7 @@ norm15
 <td>$\beta, \quad - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- c, \quad b$</td>
 <td>$\beta - c, \quad b - \gamma$</td>
 <td>$- c, \quad b$</td>
@@ -16611,7 +16611,7 @@ norm15
 <td>$\beta, \quad - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$c \left(p - 1\right), \quad b \left(1 - p\right)$</td>
 <td>$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$</td>
 <td>$- c, \quad b$</td>
@@ -16652,7 +16652,7 @@ norm15
 <td>$\beta - \frac{c}{2}, \quad \frac{b}{2} - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- c, \quad b$</td>
 <td>$\beta - c, \quad b - \gamma$</td>
 <td>$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$</td>
@@ -16693,7 +16693,7 @@ norm15
 <td>$\beta - \frac{c}{2}, \quad \frac{b}{2} - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$c \left(p - 1\right), \quad b \left(1 - p\right)$</td>
 <td>$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$</td>
 <td>$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$</td>
@@ -16734,7 +16734,7 @@ norm15
 <td>$\beta, \quad - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- \frac{c}{2}, \quad \frac{b}{2}$</td>
 <td>$\beta - c, \quad b - \gamma$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
@@ -16775,7 +16775,7 @@ norm15
 <td>$\beta, \quad - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$0, \quad 0$</td>
 <td>$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
@@ -16816,7 +16816,7 @@ norm15
 <td>$\beta - \frac{c}{2}, \quad \frac{b}{2} - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- \frac{c}{2}, \quad \frac{b}{2}$</td>
 <td>$\beta - c, \quad b - \gamma$</td>
 <td>$\beta, \quad - \gamma$</td>
@@ -16857,7 +16857,7 @@ norm15
 <td>$\beta - \frac{c}{2}, \quad \frac{b}{2} - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$0, \quad 0$</td>
 <td>$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$</td>
 <td>$\beta, \quad - \gamma$</td>
@@ -16898,7 +16898,7 @@ norm15
 <td>$\beta - c p, \quad b p - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- c, \quad b$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
 <td>$- c, \quad b$</td>
@@ -16939,7 +16939,7 @@ norm15
 <td>$\beta - c p, \quad b p - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$c \left(p - 1\right), \quad b \left(1 - p\right)$</td>
 <td>$0, \quad 0$</td>
 <td>$- c, \quad b$</td>
@@ -16980,7 +16980,7 @@ norm15
 <td>$\beta - c, \quad b - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- c, \quad b$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
 <td>$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$</td>
@@ -17021,7 +17021,7 @@ norm15
 <td>$\beta - c, \quad b - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$c \left(p - 1\right), \quad b \left(1 - p\right)$</td>
 <td>$0, \quad 0$</td>
 <td>$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$</td>
@@ -17062,7 +17062,7 @@ norm15
 <td>$\beta - c p, \quad b p - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- \frac{c}{2}, \quad \frac{b}{2}$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
@@ -17103,7 +17103,7 @@ norm15
 <td>$\beta - c p, \quad b p - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$0, \quad 0$</td>
 <td>$0, \quad 0$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
@@ -17144,7 +17144,7 @@ norm15
 <td>$\beta - c, \quad b - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$- \frac{c}{2}, \quad \frac{b}{2}$</td>
 <td>$\frac{\beta}{2} - \frac{c}{2}, \quad \frac{b}{2} - \frac{\gamma}{2}$</td>
 <td>$\beta, \quad - \gamma$</td>
@@ -17185,7 +17185,7 @@ norm15
 <td>$\beta - c, \quad b - \gamma$</td>
 </tr>
 <tr>
-<td>NDISC</td>
+<td>ADISC</td>
 <td>$0, \quad 0$</td>
 <td>$0, \quad 0$</td>
 <td>$\beta, \quad - \gamma$</td>

@@ -146,9 +146,9 @@ double getCoopRate(
       }
       // the good rep in disc will not encounter themselves, so they cooperate with good_rep_num - 1 people. The bad rep in disc will encounter good_rep_num people
       temp_sum += good_rep_in_disc * (good_rep_num - 1) + (donor_id_set.size() - good_rep_in_disc) * good_rep_num;
-    } else if (do_stg_name == "NDISC") {
+    } else if (do_stg_name == "ADISC") {
       // record the number of people with reputation 0 in disc
-      // TODO: ndisc / adisc
+      // TODO: ADISC / adisc
       int bad_rep_in_ndisc = 0;
       for (const auto& id: donor_id_set) {
         if (recipients[id].getVarValue(REPUTATION_STR) == 0.0) {
@@ -172,7 +172,7 @@ double getCoopRate(
  *
  * @param donorStrategy
  * @param recipientStrategy
- * @param payoffMatrix
+ * @param payoff_matrix
  * @param strategyName2donorId
  * @param strategyName2recipientId
  * @param population
@@ -204,8 +204,8 @@ double getAvgPayoff(
 /**
  * @brief Counting the number of people in each policy pair can generate log rows:
  * statistics: C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR,
- * step, C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR, NDISC-NR,
- * NDISC-SR, NDISC-AR, NDISC-UR, D-NR, D-SR, D-AR, D-UR, C, DISC, NDISC, D, NR,
+ * step, C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR, ADISC-NR,
+ * ADISC-SR, ADISC-AR, ADISC-UR, D-NR, D-SR, D-AR, D-UR, C, DISC, ADISC, D, NR,
  * SR, AR, UR, cr
  * 
  * @param donors 
@@ -307,7 +307,7 @@ string printStatistics(
 /**
  * @brief evolution process
  *
- * @param stepNum
+ * @param step_num
  * @param population
  * @param s
  * @param b
@@ -316,7 +316,7 @@ string printStatistics(
  * @param gamma
  * @param mu
  * @param normId
- * @param updateStepNum
+ * @param update_step_num
  * @param p0
  * @param payoff_matrix_config_name
  * @param bar
@@ -326,48 +326,48 @@ string printStatistics(
  * @param dynamic_bar_id
  * @param log_step
  */
-void func(int stepNum, int population, double s, int b, int beta, int c,
-          int gamma, double mu, int normId, int updateStepNum, double p0,
+void func(int step_num, int population, double s, int b, int beta, int c,
+          int gamma, double mu, int norm_id, int update_step_num, double p0,
           string payoff_matrix_config_name, ProgressBar* bar = nullptr,
           bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
           int log_step = 1) {
-  string normName = "norm" + to_string(normId);
+  string norm_name = "norm" + to_string(norm_id);
 
-  PayoffMatrix payoffMatrix("./payoffMatrix/" + payoff_matrix_config_name +
-                            "/" + "PayoffMatrix" + to_string(normId) + ".csv");
+  PayoffMatrix payoff_matrix("./payoffMatrix/" + payoff_matrix_config_name +
+                            "/" + "PayoffMatrix" + to_string(norm_id) + ".csv");
 
   // assign vars
-  payoffMatrix.updateVar("b", b);
-  payoffMatrix.updateVar("beta", beta);
-  payoffMatrix.updateVar("c", c);
-  payoffMatrix.updateVar("gamma", gamma);
-  payoffMatrix.updateVar("p", p0);
+  payoff_matrix.updateVar("b", b);
+  payoff_matrix.updateVar("beta", beta);
+  payoff_matrix.updateVar("c", c);
+  payoff_matrix.updateVar("gamma", gamma);
+  payoff_matrix.updateVar("p", p0);
 
-  payoffMatrix.evalPayoffMatrix();  // TODO: remove this line
+  payoff_matrix.evalPayoffMatrix();  // TODO: remove this line
 
   // initialize two players
-  vector<Action> donorActions;
-  donorActions.push_back(Action("C", 0));
-  donorActions.push_back(Action("D", 1));
-  // Player donor_temp("donor", 0, donorActions);
-  Player donor_temp("donor", 0, donorActions);
-  vector<Strategy> donorStrategies = payoffMatrix.getRowStrategies();
-  donor_temp.setStrategies(donorStrategies);
+  vector<Action> donor_actions;
+  donor_actions.push_back(Action("C", 0));
+  donor_actions.push_back(Action("D", 1));
+  // Player donor_temp("donor", 0, donor_actions);
+  Player donor_temp("donor", 0, donor_actions);
+  vector<Strategy> donor_strategies = payoff_matrix.getRowStrategies();
+  donor_temp.setStrategies(donor_strategies);
   donor_temp.loadStrategy("./strategy");
-  // fmt::print("donorStrategies: {}\n", donor_temp.getStrategyTables());
+  // fmt::print("donor_strategies: {}\n", donor_temp.getStrategyTables());
   donor_temp.setStrategy("C");
 
-  vector<Action> recipientActions;
-  recipientActions.push_back(Action("C", 0));
-  recipientActions.push_back(Action("D", 1));
-  Player recipient_temp("recipient", 0, recipientActions);
-  vector<Strategy> recipientStrategies = payoffMatrix.getColStrategies();
-  recipient_temp.setStrategies(recipientStrategies);
+  vector<Action> recipient_actions;
+  recipient_actions.push_back(Action("C", 0));
+  recipient_actions.push_back(Action("D", 1));
+  Player recipient_temp("recipient", 0, recipient_actions);
+  vector<Strategy> recipient_strategies = payoff_matrix.getColStrategies();
+  recipient_temp.setStrategies(recipient_strategies);
 
   recipient_temp.loadStrategy("./strategy");
-  // fmt::print("recipientStrategies: {}\n",
+  // fmt::print("recipient_strategies: {}\n",
   // recipient_temp.getStrategyTables());
   recipient_temp.setStrategy("NR");
 
@@ -376,8 +376,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   // fmt::print("recipient_temp vars: {}\n", recipient_temp.getVars());
 
   // load norm
-  string normPath = "./norm/" + normName + ".csv";
-  Norm norm(normPath);
+  string norm_path = "./norm/" + norm_name + ".csv";
+  Norm norm(norm_path);
   // fmt::print("norm: {}\n", norm.getNormTableStr());
 
   // the two players are used as templates to generate population players
@@ -386,12 +386,12 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   // time seed
   unsigned seed_don = chrono::system_clock::now().time_since_epoch().count();
   default_random_engine gen_don(seed_don);
-  uniform_int_distribution<int> dis_don(0, donorStrategies.size() - 1);
+  uniform_int_distribution<int> dis_don(0, donor_strategies.size() - 1);
 
   unsigned seed_rec =
       chrono::system_clock::now().time_since_epoch().count() + 1;
   default_random_engine gen_rec(seed_rec);
-  uniform_int_distribution<int> dis_rec(0, recipientStrategies.size() - 1);
+  uniform_int_distribution<int> dis_rec(0, recipient_strategies.size() - 1);
 
   unsigned seed_reputation =
       chrono::system_clock::now().time_since_epoch().count() + 2;
@@ -404,10 +404,10 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   uniform_real_distribution<double> dis_probability(0, 1);
 
   // record the strategy distribution of the population
-  unordered_map<string, set<int>> strategyName2DonorId;
-  unordered_map<string, set<int>> strategyName2RecipientId;
-  // judge if population can be divided by donorStrategies.size()
-  assert(population % donorStrategies.size() == 0);
+  unordered_map<string, set<int>> strategy_name2donor_id;
+  unordered_map<string, set<int>> strategy_name2recipient_id;
+  // judge if population can be divided by donor_strategies.size()
+  assert(population % donor_strategies.size() == 0);
 
   // reputation init vector
   int good_rep_num = static_cast<int>(population * p0);
@@ -423,15 +423,15 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   // strategy init vector, each strategy pair has the same number of players
   vector<int> donor_stra_id;
   vector<int> recipient_stra_id;
-  for (int i = 0; i < donorStrategies.size(); i++) {
+  for (int i = 0; i < donor_strategies.size(); i++) {
     donor_stra_id.insert(
         donor_stra_id.end(),
-        population / static_cast<double>(donorStrategies.size()), i);
-    for (int j = 0; j < recipientStrategies.size(); j++) {
+        population / static_cast<double>(donor_strategies.size()), i);
+    for (int j = 0; j < recipient_strategies.size(); j++) {
       recipient_stra_id.insert(
           recipient_stra_id.end(),
-          (population / static_cast<double>(donorStrategies.size())) /
-              static_cast<double>(recipientStrategies.size()),
+          (population / static_cast<double>(donor_strategies.size())) /
+              static_cast<double>(recipient_strategies.size()),
           j);
     }
   }
@@ -451,14 +451,14 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
 
     auto [donor_stra_i, recipient_stra_i] = stra_id_pairs[i];
 
-    temp_donor.setStrategy(donorStrategies[donor_stra_i]);
-    strategyName2DonorId[temp_donor.getStrategy().getName()].insert(i);
+    temp_donor.setStrategy(donor_strategies[donor_stra_i]);
+    strategy_name2donor_id[temp_donor.getStrategy().getName()].insert(i);
     donors.push_back(temp_donor);
 
-    temp_recipient.setStrategy(recipientStrategies[recipient_stra_i]);
+    temp_recipient.setStrategy(recipient_strategies[recipient_stra_i]);
     temp_recipient.updateVar(REPUTATION_STR, reputation_value[i]);
 
-    strategyName2RecipientId[temp_recipient.getStrategy().getName()].insert(i);
+    strategy_name2recipient_id[temp_recipient.getStrategy().getName()].insert(i);
     recipients.push_back(temp_recipient);
   }
 
@@ -469,7 +469,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     filesystem::create_directory(log_dir);
   }
 
-  const json::value jv = {{"stepNum", stepNum},
+  const json::value jv = {{"stepNum", step_num},
                           {"population", population},
                           {"s", s},
                           {"b", b},
@@ -477,13 +477,13 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
                           {"c", c},
                           {"gamma", gamma},
                           {"mu", mu},
-                          {"normId", normId},
+                          {"normId", norm_id},
                           {"p0", p0},
                           {"payoffMatrix", payoff_matrix_config_name},
                           // not model parameters
                           {"other",
                            {
-                               {"updateStepNum", updateStepNum},
+                               {"updateStepNum", update_step_num},
                                {"logStep", log_step},
                            }}};
 
@@ -492,15 +492,15 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   auto out = fmt::output_file(log_file_path);
   // generate header
   string line = "step";
-  for (Strategy donorS : donorStrategies) {
-    for (Strategy recipientS : recipientStrategies) {
+  for (Strategy donorS : donor_strategies) {
+    for (Strategy recipientS : recipient_strategies) {
       line += "," + donorS.getName() + "-" + recipientS.getName();
     }
   }
-  for (Strategy donorS : donorStrategies) {
+  for (Strategy donorS : donor_strategies) {
     line += "," + donorS.getName();
   }
-  for (Strategy recipientS : recipientStrategies) {
+  for (Strategy recipientS : recipient_strategies) {
     line += "," + recipientS.getName();
   }
   line += ",good_rep,cr";
@@ -508,22 +508,22 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
   out.print("{}\n", line);
 
   string logLine =
-      printStatistics(donors, recipients, donorStrategies, recipientStrategies,
-                      strategyName2DonorId, strategyName2RecipientId,
+      printStatistics(donors, recipients, donor_strategies, recipient_strategies,
+                      strategy_name2donor_id, strategy_name2recipient_id,
                       population, 0, false, good_rep_num);
   out.print("{}\n", logLine);
 
   uniform_int_distribution<int> dis(0, population - 1);
-  for (int step = 0; step < stepNum; step++) {
+  for (int step = 0; step < step_num; step++) {
     // update progress bar
     if (turn_up_progress_bar) {
-      // (*bar).set_progress((double)step / stepNum * 100);
+      // (*bar).set_progress((double)step / step_num * 100);
       // only update once when the progress bar increases by 1%
-      if (step % (stepNum / 100) == 0) {
+      if (step % (step_num / 100) == 0) {
         (*bar).tick();
       }
     } else if (turn_up_dynamic_bar) {
-      if (step % (stepNum / 100) == 0) {
+      if (step % (step_num / 100) == 0) {
         (*dynamic_bar)[dynamic_bar_id].tick();
       }
     }
@@ -551,21 +551,21 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       int randId_d = 0;
       int randId_r = 0;
       do {
-        randId_d = donors[focal_i].getRandomInt(0, donorStrategies.size() - 1);
+        randId_d = donors[focal_i].getRandomInt(0, donor_strategies.size() - 1);
         randId_r =
-            recipients[focal_i].getRandomInt(0, recipientStrategies.size() - 1);
+            recipients[focal_i].getRandomInt(0, recipient_strategies.size() - 1);
       } while (randId_d == donors[focal_i].getStrategy().getId() &&
                randId_r == recipients[focal_i].getStrategy().getId());
 
-      strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
+      strategy_name2donor_id[donors[focal_i].getStrategy().getName()].erase(
           focal_i);
-      donors[focal_i].setStrategy(donorStrategies[randId_d]);
-      strategyName2DonorId[donorStrategies[randId_d].getName()].insert(focal_i);
+      donors[focal_i].setStrategy(donor_strategies[randId_d]);
+      strategy_name2donor_id[donor_strategies[randId_d].getName()].insert(focal_i);
 
-      strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
+      strategy_name2recipient_id[recipients[focal_i].getStrategy().getName()]
           .erase(focal_i);
-      recipients[focal_i].setStrategy(recipientStrategies[randId_r]);
-      strategyName2RecipientId[recipientStrategies[randId_r].getName()].insert(
+      recipients[focal_i].setStrategy(recipient_strategies[randId_r]);
+      strategy_name2recipient_id[recipient_strategies[randId_r].getName()].insert(
           focal_i);
     } else {
       Strategy rolemodel_donorStrategy = donors[rolemodel_i].getStrategy();
@@ -573,16 +573,16 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
           recipients[rolemodel_i].getStrategy();
 
       // if payoff_matrix_config_name == "payoffMatrix_shortterm", then eval the
-      // whole payoffMatrix according to the current reputation distribution
+      // whole payoff_matrix according to the current reputation distribution
       map<string, double> vars_for_recipient = {
           {"p", recipients[rolemodel_i].getVarValue(REPUTATION_STR)}};
       if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
-        payoffMatrix.updateVar("p",
+        payoff_matrix.updateVar("p",
                                static_cast<double>(good_rep_num) / population);
-        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+        payoff_matrix.evalPayoffMatrix({}, vars_for_recipient);
       } else if (payoff_matrix_config_name ==
                  "payoffMatrix_longterm_no_norm_error") {
-        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+        payoff_matrix.evalPayoffMatrix({}, vars_for_recipient);
       } else {
         cerr << "payoff_matrix_config_name error: "
              << payoff_matrix_config_name << endl;
@@ -590,8 +590,8 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       }
 
       double rolemodel_payoff = getAvgPayoff(
-          rolemodel_donorStrategy, rolemodel_recipientStrategy, payoffMatrix,
-          strategyName2DonorId, strategyName2RecipientId, population);
+          rolemodel_donorStrategy, rolemodel_recipientStrategy, payoff_matrix,
+          strategy_name2donor_id, strategy_name2recipient_id, population);
 
       Strategy focul_donorStrategy = donors[focal_i].getStrategy();
       Strategy focul_recipientStrategy = recipients[focal_i].getStrategy();
@@ -600,12 +600,12 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       vars_for_recipient = {
           {"p", recipients[focal_i].getVarValue(REPUTATION_STR)}};
       if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
-        payoffMatrix.updateVar("p",
+        payoff_matrix.updateVar("p",
                                static_cast<double>(good_rep_num) / population);
-        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+        payoff_matrix.evalPayoffMatrix({}, vars_for_recipient);
       } else if (payoff_matrix_config_name ==
                  "payoffMatrix_longterm_no_norm_error") {
-        payoffMatrix.evalPayoffMatrix({}, vars_for_recipient);
+        payoff_matrix.evalPayoffMatrix({}, vars_for_recipient);
       } else {
         cerr << "payoff_matrix_config_name error: "
              << payoff_matrix_config_name << endl;
@@ -613,21 +613,21 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       }
 
       double focul_payoff = getAvgPayoff(
-          focul_donorStrategy, focul_recipientStrategy, payoffMatrix,
-          strategyName2DonorId, strategyName2RecipientId, population);
+          focul_donorStrategy, focul_recipientStrategy, payoff_matrix,
+          strategy_name2donor_id, strategy_name2recipient_id, population);
 
       // fermi
       if (dis_probability(gen_probability) <
           fermi(focul_payoff, rolemodel_payoff, s)) {
-        strategyName2DonorId[donors[focal_i].getStrategy().getName()].erase(
+        strategy_name2donor_id[donors[focal_i].getStrategy().getName()].erase(
             focal_i);
         donors[focal_i].setStrategy(rolemodel_donorStrategy);
-        strategyName2DonorId[rolemodel_donorStrategy.getName()].insert(focal_i);
+        strategy_name2donor_id[rolemodel_donorStrategy.getName()].insert(focal_i);
 
-        strategyName2RecipientId[recipients[focal_i].getStrategy().getName()]
+        strategy_name2recipient_id[recipients[focal_i].getStrategy().getName()]
             .erase(focal_i);
         recipients[focal_i].setStrategy(rolemodel_recipientStrategy);
-        strategyName2RecipientId[rolemodel_recipientStrategy.getName()].insert(
+        strategy_name2recipient_id[rolemodel_recipientStrategy.getName()].insert(
             focal_i);
       }
     }
@@ -676,9 +676,9 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     if (step % log_step == 0) {
       // generate log
       out.print("{}\n",
-                printStatistics(donors, recipients, donorStrategies,
-                                recipientStrategies, strategyName2DonorId,
-                                strategyName2RecipientId, population, step + 1,
+                printStatistics(donors, recipients, donor_strategies,
+                                recipient_strategies, strategy_name2donor_id,
+                                strategy_name2recipient_id, population, step + 1,
                                 false, good_rep_num));
     }
   }
