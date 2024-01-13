@@ -14,9 +14,8 @@
 #include "PayoffMatrix.hpp"
 
 class Player {
-  /** 利用静态变量的特性来维护公共信息，数据类型为map，key为string，value 为
-   * double 
-   */
+  /**Using the characteristics of static variable to maintain the public
+   * information, the data type is map, key for string, value for double */
  private:
   static std::map<std::string, double> commonInfo;
 
@@ -24,20 +23,20 @@ class Player {
   int score;
 
   std::vector<Action> actions;
-  std::vector<double> actionPossibility;  //< 随机动作概率（混合策略）
+  std::vector<double> actionPossibility; //< random action probability (mixed strategy)
 
-  std::mt19937 gen;  //< double 随机数生成器
+  std::mt19937 gen; //< double random number generator
 
   std::map<std::string, std::vector<std::vector<std::string>>>
-      strategyTables;  //< 每种策略的动作函数表
+      strategyTables; //< action function table of each strategy
   std::unordered_map<std::string, Action>
       strategyFunc;  //<
-                     // 每种策略的动作函数，key由strategyTables的key和所有输入拼接组成，value为动作名称
-  Strategy strategy;  //< 当前策略
+                     // Action function of each policy. key consists of the key of the strategyTables and all inputs. value is the action name
+  Strategy strategy; //< current strategy
 
   std::vector<Strategy> strategies;
 
-  double deltaScore;  //< 最近一次upScore时产生的收益变化
+  double deltaScore;  //< The change in revenue from the last upScore
 
   std::map<std::string, double> vars;
 
@@ -46,15 +45,14 @@ class Player {
   Player(std::string name, int score, std::vector<Action> actions);
   ~Player();
 
-  /** 根据动作概率返回一个动作 */
-  Action play();
+  /**According to the requirements of the input to return to an action, depending on the strategyTables*/
+  Action donate(std::string const &recipientReputation,
+                double action_error_p = 0);
 
-  /** 根据输入返回一个动作，需要strategyTables */
-  Action donate(std::string const& recipientReputation, double action_error_p = 0);
+  Action reward(std::string const &donorActionName, double action_error_p = 0);
 
-  Action reward(std::string const& donorActionName, double action_error_p = 0);
-
-  /**根据查询到的收益的delta值，更新分数*/
+  /** according to the query to the income of the delta value, update the
+   * score*/
   void updateScore(double delta) {
     this->deltaScore += delta;
     this->score += delta;
@@ -69,21 +67,14 @@ class Player {
   void setScore(int score) { this->score = score; }
 
   std::vector<Action> getActions() const { return this->actions; }
-  // std::vector<Action>
-  // void setActions(const std::vector<Action> &actions) {
-  //   this->actions = actions;
-  // }
 
   std::vector<double> getActionPossibility() const {
     return this->actionPossibility;
   }
-  void setActionPossibility(const std::vector<double> &actionPossibility);
-
   Strategy getStrategy() const { return this->strategy; }
   void setStrategy(const Strategy &strategy) { this->strategy = strategy; }
   void setStrategy(const std::string &strategyName);
 
-  // 公共信息维护函数
   static std::map<std::string, double> getCommonInfo() {
     return Player::commonInfo;
   }
@@ -159,12 +150,12 @@ class Player {
     this->strategies = strategies;
   }
 
-  // 随机性行为，基于对象内部的随机数生成器，由于使用了
-  // 随机数生成器，随机行为不能用const修饰
+  // random behavior, based on the random number generator inside the object, with the use of
+  // random number generator, and random behavior cannot use cons
   Strategy getRandomOtherStrategy(std::vector<Strategy> &alterStrategy);
-  Action getRandomAction(std::vector<Action> &alterAction); 
+  Action getRandomAction(std::vector<Action> &alterAction);
 
-  // 抛出一个0-1的概率
+  // to throw out a probability of 0 and 1
   double getProbability();
   int getRandomInt(int start, int end);
 

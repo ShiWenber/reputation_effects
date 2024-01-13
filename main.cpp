@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @author ShiWenber (1210169842@qq.com)
+ * @author 
  * @brief the simulation of the evolution of cooperation based on the static
  * payoff matrix (combined the reputation and norm)
  *
@@ -92,20 +92,15 @@ using namespace std::chrono;
 using namespace boost;
 
 /**
- * @brief 费米函数，用来计算策略转变概率
+ * @brief fermi function, which is used to calculate the probability of transition of strategy
  *
- * @param payoff_current 现状收益
- * @param payoff_new 新策略收益
- * @param s
+ * @param payoff_current the payoff of the current strategy
+ * @param payoff_new the payoff of the new strategy
+ * @param s the sensitivity of the fermi function if s is large, the probability of transition is small
  * @return double
  */
 double fermi(double payoff_current, double payoff_new, double s) {
   double res = 1 / (1 + exp((payoff_current - payoff_new) * s));
-  // if (res > 0.97) {
-  //   cout << payoff_current << "," << payoff_new << "," << s << endl;
-  // }
-  // cout << payoff_current << "," << payoff_new << "," << s << endl;
-  // cout << res << endl;
   return res;
 }
 
@@ -206,24 +201,24 @@ double getAvgPayoff(
   return (1.0 / (population - 1)) * (eval_donor + eval_recipient - eval_same);
 }
 
-
 /**
- * @brief  统计每个策略对的人数同时可以生成log行:
+ * @brief Counting the number of people in each policy pair can generate log rows:
+ * statistics: C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR,
  * step, C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR, NDISC-NR,
  * NDISC-SR, NDISC-AR, NDISC-UR, D-NR, D-SR, D-AR, D-UR, C, DISC, NDISC, D, NR,
  * SR, AR, UR, cr
- *
- *
- * @param donors
- * @param recipients
- * @param donorStrategies
- * @param recipientStrategies
- * @param strategyName2DonorId
- * @param strategyName2RecipientId
- * @param population
- * @param step
- * @param print
- * @return string
+ * 
+ * @param donors 
+ * @param recipients 
+ * @param donorStrategies 
+ * @param recipientStrategies 
+ * @param strategyName2DonorId 
+ * @param strategyName2RecipientId 
+ * @param population 
+ * @param step 
+ * @param print 
+ * @param good_rep_num 
+ * @return string 
  */
 string printStatistics(
     const vector<Player>& donors, const vector<Player>& recipients,
@@ -601,7 +596,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
       Strategy focul_donorStrategy = donors[focal_i].getStrategy();
       Strategy focul_recipientStrategy = recipients[focal_i].getStrategy();
 
-      // TODO: 优化
+      // TODO: optimize?
       vars_for_recipient = {
           {"p", recipients[focal_i].getVarValue(REPUTATION_STR)}};
       if (payoff_matrix_config_name == "payoffMatrix_shortterm") {
@@ -679,7 +674,7 @@ void func(int stepNum, int population, double s, int b, int beta, int c,
     }
 
     if (step % log_step == 0) {
-      // 生成log
+      // generate log
       out.print("{}\n",
                 printStatistics(donors, recipients, donorStrategies,
                                 recipientStrategies, strategyName2DonorId,

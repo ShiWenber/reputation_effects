@@ -9,12 +9,11 @@
 
 class PayoffMatrix {
  private:
-  std::vector<std::vector<std::vector<std::string>>> payoffMatrixStr; //< 三维的收益矩阵，二人博弈就是三维的(视为二维矩阵则每个元素都是所有参与玩家的收益列表)，三人博弈就是四维的，以此类推，这个表示的是原始的string收益矩阵，单元格可以为表达式
-  std::vector<std::vector<std::vector<double>>> payoffMatrix; //< 三维的收益矩阵，二人博弈就是三维的(视为二维矩阵则每个元素都是所有参与玩家的收益列表)，三人博弈就是四维的，以此类推，这个表示的是计算后的double收益矩阵，单元格为double
-  // double* payoffMatrix; //< 三维的收益矩阵，二人博弈就是三维的(视为二维矩阵则每个元素都是所有参与玩家的收益列表)，三人博弈就是四维的，以此类推，这个表示的是计算后的double收益矩阵，单元格为double
+  std::vector<std::vector<std::vector<std::string>>> payoffMatrixStr;//< payoff matrix, the 3 d game is two three-dimensional (as a two-dimensional matrix of each element was all players involved in earnings list), three people
+  std::vector<std::vector<std::vector<double>>> payoffMatrix;//< payoff matrix, the 3 d game is two three-dimensional (as a two-dimensional matrix of each element was all players involved in earnings list), three people
   std::vector<Strategy> colStrategies;
   std::vector<Strategy> rowStrategies;
-  std::map<std::string, double> vars; //< 用于存储变量名和变量值的字典
+  std::map<std::string, double> vars; //< is used to store variable names and values of the dictionary
   int rowNum;
   int colNum;
   int playerNum;
@@ -24,10 +23,8 @@ class PayoffMatrix {
   PayoffMatrix(std::string csvPath);
   ~PayoffMatrix();
 
- // TODO: 完成
   std::vector<double> getPayoff(const Strategy& strategyA,const Strategy& strategyB) const;
   // std::vector<double> getPayoff()
-
   std::vector<std::vector<std::vector<double>>> getPayoffMatrix() const { return this->payoffMatrix; }
   void setPayoffMatrix(const std::vector<std::vector<std::vector<double>>> &payoffMatrix) { this->payoffMatrix = payoffMatrix; }
 
