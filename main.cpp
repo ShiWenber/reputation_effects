@@ -492,26 +492,26 @@ void func(int step_num, int population, double s, int b, int beta, int c,
   auto out = fmt::output_file(log_file_path);
   // generate header
   string line = "step";
-  for (Strategy donorS : donor_strategies) {
-    for (Strategy recipientS : recipient_strategies) {
-      line += "," + donorS.getName() + "-" + recipientS.getName();
+  for (Strategy donor_s : donor_strategies) {
+    for (Strategy recipient_s : recipient_strategies) {
+      line += "," + donor_s.getName() + "-" + recipient_s.getName();
     }
   }
-  for (Strategy donorS : donor_strategies) {
-    line += "," + donorS.getName();
+  for (Strategy donor_s : donor_strategies) {
+    line += "," + donor_s.getName();
   }
-  for (Strategy recipientS : recipient_strategies) {
-    line += "," + recipientS.getName();
+  for (Strategy recipient_s : recipient_strategies) {
+    line += "," + recipient_s.getName();
   }
   line += ",good_rep,cr";
 
   out.print("{}\n", line);
 
-  string logLine =
+  string log_line =
       printStatistics(donors, recipients, donor_strategies, recipient_strategies,
                       strategy_name2donor_id, strategy_name2recipient_id,
                       population, 0, false, good_rep_num);
-  out.print("{}\n", logLine);
+  out.print("{}\n", log_line);
 
   uniform_int_distribution<int> dis(0, population - 1);
   for (int step = 0; step < step_num; step++) {
