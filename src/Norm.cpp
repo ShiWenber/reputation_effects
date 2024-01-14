@@ -32,7 +32,7 @@ void Norm::loadNormFunc(std::string csvPath) {
 
     std::string line;
     while (std::getline(csvFile, line)) {
-      // 清除line中的"\r"
+      // remove "\r" in line
       std::string target = "\r";
       int pos = line.find(target);
       int n = line.size();
@@ -54,20 +54,19 @@ void Norm::loadNormFunc(std::string csvPath) {
     std::cerr << e.what() << '\n';
   }
 
-  // TODO: 将输入的表转置可以节省复杂度
-  // 生成strategyFunc，用来加速查表
+  // generate strategyFunc to accelerate table lookup
   std::string key = "";
-  // 按列遍历所有的strategyTable
+  // traverse all strategyTable by column
   for (int col = 0; col < this->normTableStr[0].size(); col++) {
-    // 按行遍历所有的strategyTable
+    // traverse all strategyTable by row
     for (int row = 0; row < this->normTableStr.size(); row++) {
-      // 如果是最后一行，则为输出
+      // if it is the last row, it is the output
       if (row == this->normTableStr.size() - 1) {
         this->normFunc[key] = std::stod(this->normTableStr[row][col]);
-        // 还原 key 值为初始值
+        // restore key value to initial value
         key = "";
       } else {
-        // 如果不是最后一行，则为输入
+        // if it is not the last row, it is the input
         key += "!" + this->normTableStr[row][col];
       }
     }

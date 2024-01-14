@@ -7,7 +7,8 @@
 #include <vector>
 
 /**
- * @brief Construct a new QTable::QTable object table中的元素初始化为0
+ * @brief Construct a new QTable::QTable object the elements in table are initialized to 0
+ * 
  *
  * @param rowNames
  * @param colNames
@@ -54,12 +55,12 @@ double QTable::getProbability() {
 }
 
 /**
- * @brief 输入行名，返回该行最大值的列名和列索引 input rowName, return the
+ * @brief input rowName, return the
  * colName and colIndex
  *
  *
  * @param rowName
- * @return std::pair<std::string, int> (列名，列索引)
+ * @return std::pair<std::string, int> (colName, colIndex)
  */
 std::pair<std::string, int> QTable::getBestOutput(std::string rowName) {
   std::vector<double> row_qs = this->table[this->rowIndex.at(rowName)];

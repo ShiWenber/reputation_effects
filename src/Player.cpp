@@ -46,27 +46,6 @@ Player::Player(std::string const& name, int score,
 
 Player::~Player() {}
 
-// /**
-//  * @brief 用轮盘法选择动作
-//  *
-//  * @return Action 抽取出的动作，也是本轮采取的动作
-//  */
-// Action Player::play() {
-//   // 用时间种子生成一个0到1之间的随机数
-//   std::uniform_real_distribution<double> randomDis(0, 1);
-//   double randomNum = randomDis(this->gen);
-
-//   // 轮盘法选择动作
-//   double sum = 0;
-//   for (int i = 0; i < this->actionPossibility.size(); i++) {
-//     sum += this->actionPossibility[i];
-//     if (randomNum < sum) {
-//       return this->actions[i];
-//     }
-//   }
-//   return this->actions[this->actions.size() - 1];
-// }
-
 /**
  * @brief
  *
@@ -134,7 +113,7 @@ Action Player::reward(std::string const& donorActionName, double epsilon, double
 void Player::setActionPossibility(
     const std::vector<double>& actionPossibility) {
   double sum = 0;
-  // 判断actionPossibility之和是否为1
+  // judge if the sum of actionPossibility is 1
   for (double p : actionPossibility) {
     if (p < 0) {
       std::cerr << "actionPossibility must be positive" << std::endl;
@@ -148,34 +127,34 @@ void Player::setActionPossibility(
     throw "actionPossibility must sum to 1";
   }
 
-  // 将this->actionPossibility设置为actionPossibility
+  // set this->actionPossibility to actionPossibility
   for (int i = 0; i < actionPossibility.size(); i++) {
     this->actionPossibility[i] = actionPossibility[i];
   }
 }
 
 /**
- * @brief 从 strategy 中查找指定 name 的 strategy
+ * @brief judge the strategy in strategies from strategies and set it to this->strategy
  *
- * @param strategyName
+ * @param strategy_name
  */
-void Player::setStrategy(const std::string& strategyName) {
+void Player::setStrategy(const std::string& strategy_name) {
   bool existed = false;
   for (Strategy s : this->strategies) {
-    if (strategyName == s.getName()) {
+    if (strategy_name == s.getName()) {
       this->strategy = s;
       existed = true;
       break;
     }
   }
   if (existed != true) {
-    std::cerr << "not exist: " << strategyName << std::endl;
-    throw "not exist: " + strategyName;
+    std::cerr << "not exist: " << strategy_name << std::endl;
+    throw "not exist: " + strategy_name;
   }
 }
 
 /**
- * @brief 从 ${strategyPath}/${Player.name}/${strategyName}.csv 中加载策略
+ * @brief from ${strategyPath}/${Player.name}/${strategyName}.csv load strategy
  *
  * @param strategyPath
  */
@@ -195,7 +174,7 @@ void Player::loadStrategy(const std::string& strategyPath) {
 
       std::string line;
       while (std::getline(csvFile, line)) {
-        // 清除line中的"\r"
+        // remove "\r" in line
         std::string target = "\r";
         int pos = line.find(target);
         int n = line.size();
@@ -217,24 +196,23 @@ void Player::loadStrategy(const std::string& strategyPath) {
       std::cerr << e.what() << '\n';
     }
 
-    // TODO: 将输入的表转置可以节省复杂度
-    // 生成strategyFunc，用来加速查表
+    // generate strategyFunc to accelerate table lookup
     std::string key = strategyName;
-    // 按列遍历所有的strategyTable
+    // traverse all strategyTable by column
     for (int col = 0; col < this->strategyTables[strategyName][0].size();
          col++) {
-      // 按行遍历所有的strategyTable
+      // traverse all strategyTable by row
       for (int row = 0; row < this->strategyTables[strategyName].size();
            row++) {
-        // 如果是最后一行，则为输出
+        // if it is the last row, it is the output
         if (row == this->strategyTables[strategyName].size() - 1) {
-          // 从 this->actions 中查找该动作
+          // find action from this->actions
           int finded = 0;
           for (Action action : this->actions) {
             if (action.getName() ==
                 this->strategyTables[strategyName][row][col]) {
               this->strategyFunc[key] = action;
-              // 还原 key 值为初始值
+              // restore key value to initial value
               key = strategyName;
               // this->strategyFunc[key] = action.getName();
               finded = 1;
@@ -248,7 +226,7 @@ void Player::loadStrategy(const std::string& strategyPath) {
             throw "action not found";
           }
         } else {
-          // 如果不是最后一行，则为输入
+          // if it is not the last row, it is the input
           key += "!" + this->strategyTables[strategyName][row][col];
         }
       }
@@ -256,14 +234,13 @@ void Player::loadStrategy(const std::string& strategyPath) {
   }
 }
 
-/** @brief  使用自带的随机数生成器生成一个随机的策略(等概率的)
+/** @brief use the random number generator to generate a random strategy
  *
  * @param alterStra egy
  * @return Strategy
  */
-// TODO: --
 Strategy Player::getRandomOtherStrategy(std::vector<Strategy>& alterStrategy) {
-  // 判断是否有可选的策略
+  // judge if there is a selectable strategy
   if (alterStrategy.size() <= 0) {
     std::cerr << "no alter strategy" << std::endl;
     throw "no alter strategy";
@@ -280,14 +257,15 @@ double Player::getProbability() {
 }
 
 /**
- * @brief 输出随机整数 [start, end]
+ * @brief randomly output an integer in [start, end]
  *
  * @param input
  * @return int
  */
 int Player::getRandomInt(int start, int end) {
+  // from [start, end] get a random integer
   std::uniform_int_distribution<int> randomInt(
-      start, end);  //< 从 [start, end]中取随机整数
+      start, end);  
   int randInt = randomInt(this->gen);
   return randInt;
 }
@@ -303,7 +281,7 @@ Action Player::getActionFromStrategyTable(const std::string& strategyName,
 }
 
 /**
- * @brief 输入一个字符(字符可能是 reputation 或者 actionName)
+ * @brief input a character (the character may be reputation or actionName)
  *
  * @param input  reputation / actionName
  * @return Action
@@ -330,7 +308,7 @@ Action Player::getActionFromQTable(const std::string& input, double epsilon,
 }
 
 Action Player::getRandomAction(std::vector<Action> const& alterActions) {
-  // 判断是否有可选的策略
+  // judge if there is a selectable strategy
   if (alterActions.size() <= 0) {
     std::cerr << "no alter action" << std::endl;
     throw "no alter action";
