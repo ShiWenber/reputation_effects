@@ -131,58 +131,58 @@ string printStatistics(vector<Player>& donors, vector<Player>& recipients,
  *
  * @return int
  */
-void func(int stepNum, int episode, int buffer_capacity, int batch_size,
+void func(int step_num, int episode, int buffer_capacity, int batch_size,
           double alpha, double discount, int population, double s, int b,
           int beta, int c, int gamma, double mu, double epsilon,
-          double beta_boltzmann, bool with_boltzmann, int normId,
-          int updateStepNum, double p0, string payoff_matrix_config_name,
+          double beta_boltzmann, bool with_boltzmann, int norm_id,
+          int update_step_num, double p0, string payoff_matrix_config_name,
           ProgressBar* bar = nullptr, bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
           int log_step = 1) {
 
-  string normName = "norm" + to_string(normId);
+  string norm_name = "norm" + to_string(norm_id);
 
-  RewardMatrix rewardMatrix("./rewardMatrix/RewardMatrix.csv");
+  RewardMatrix reward_matrix("./rewardMatrix/RewardMatrix.csv");
 
   // assign vars
-  rewardMatrix.updateVar("b", b);
-  rewardMatrix.updateVar("beta", beta);
-  rewardMatrix.updateVar("c", c);
-  rewardMatrix.updateVar("gamma", gamma);
-  rewardMatrix.updateVar("p", p0);
+  reward_matrix.updateVar("b", b);
+  reward_matrix.updateVar("beta", beta);
+  reward_matrix.updateVar("c", c);
+  reward_matrix.updateVar("gamma", gamma);
+  reward_matrix.updateVar("p", p0);
 
-  rewardMatrix.evalRewardMatrix();
-  // rewardMatrix.print();
+  reward_matrix.evalRewardMatrix();
+  // reward_matrix.print();
 
   // initialize two players
-  vector<Strategy> donorStrategies;
-  donorStrategies.push_back(Strategy("C", 0));
-  donorStrategies.push_back(Strategy("DISC", 1));
-  donorStrategies.push_back(Strategy("NDISC", 2));
-  donorStrategies.push_back(Strategy("D", 3));
+  vector<Strategy> donor_strategies;
+  donor_strategies.push_back(Strategy("C", 0));
+  donor_strategies.push_back(Strategy("DISC", 1));
+  donor_strategies.push_back(Strategy("NDISC", 2));
+  donor_strategies.push_back(Strategy("D", 3));
 
-  vector<Strategy> recipientStrategies;
-  recipientStrategies.push_back(Strategy("NR", 0));
-  recipientStrategies.push_back(Strategy("SR", 1));
-  recipientStrategies.push_back(Strategy("AR", 2));
-  recipientStrategies.push_back(Strategy("UR", 3));
+  vector<Strategy> recipient_strategies;
+  recipient_strategies.push_back(Strategy("NR", 0));
+  recipient_strategies.push_back(Strategy("SR", 1));
+  recipient_strategies.push_back(Strategy("AR", 2));
+  recipient_strategies.push_back(Strategy("UR", 3));
 
-  vector<Action> donorActions;
-  donorActions.push_back(Action("C", 0));
-  donorActions.push_back(Action("D", 1));
-  Player donor_temp("donor", 0, donorActions, {"0", "1"}, {"C", "D"});
+  vector<Action> donor_actions;
+  donor_actions.push_back(Action("C", 0));
+  donor_actions.push_back(Action("D", 1));
+  Player donor_temp("donor", 0, donor_actions, {"0", "1"}, {"C", "D"});
 
-  vector<Action> recipientActions;
-  recipientActions.push_back(Action("C", 0));
-  recipientActions.push_back(Action("D", 1));
-  Player recipient_temp("recipient", 0, recipientActions, {"C", "D"},
+  vector<Action> recipient_actions;
+  recipient_actions.push_back(Action("C", 0));
+  recipient_actions.push_back(Action("D", 1));
+  Player recipient_temp("recipient", 0, recipient_actions, {"C", "D"},
                         {"C", "D"});
   recipient_temp.addVar(REPUTATION_STR, 0);
 
   // load norm
-  string normPath = "./norm/" + normName + ".csv";
-  Norm norm(normPath);
+  string norm_path = "./norm/" + norm_name + ".csv";
+  Norm norm(norm_path);
 
   // the two players are used as templates to generate population players
   vector<Player> donors;
@@ -194,12 +194,12 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
           .time_since_epoch()
           .count();  // add the specified value to avoid the same seed
   default_random_engine gen_don(seed_don);
-  uniform_int_distribution<int> dis_don(0, donorStrategies.size() - 1);
+  uniform_int_distribution<int> dis_don(0, donor_strategies.size() - 1);
 
   unsigned seed_rec =
       chrono::system_clock::now().time_since_epoch().count() + 1;
   default_random_engine gen_rec(seed_rec);
-  uniform_int_distribution<int> dis_rec(0, recipientStrategies.size() - 1);
+  uniform_int_distribution<int> dis_rec(0, recipient_strategies.size() - 1);
 
   unsigned seed_reputation =
       chrono::system_clock::now().time_since_epoch().count() + 2;
@@ -239,7 +239,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
     filesystem::create_directory(log_dir);
   }
 
-  const json::value jv = {{"stepNum", stepNum},
+  const json::value jv = {{"stepNum", step_num},
                           {"episode", episode},
                           {"buffer_capacity", buffer_capacity},
                           {"population", population},
@@ -249,7 +249,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
                           {"c", c},
                           {"gamma", gamma},
                           {"mu", mu},
-                          {"normId", normId},
+                          {"normId", norm_id},
                           {"p0", p0},
                           {"payoffMatrix", payoff_matrix_config_name},
                           {"epsilon", epsilon},
@@ -262,7 +262,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
                           // not model parameters
                           {"other",
                            {
-                               {"updateStepNum", updateStepNum},
+                               {"updateStepNum", update_step_num},
                                {"logStep", log_step},
                            }}};
 
@@ -272,9 +272,9 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
 
   // log header
   string log_header = "episode";
-  for (Strategy donorS : donorStrategies) {
-    for (Strategy recipientS : recipientStrategies) {
-      log_header += "," + donorS.getName() + "-" + recipientS.getName();
+  for (Strategy donor_s : donor_strategies) {
+    for (Strategy recipient_s : recipient_strategies) {
+      log_header += "," + donor_s.getName() + "-" + recipient_s.getName();
     }
   }
   log_header += ",good_rep,cr,reward";
@@ -285,7 +285,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
   for (int i_e = 0; i_e < episode; i_e++) {
     // update progress bar
     if (turn_up_progress_bar) {
-      // (*bar).set_progress((double)step / stepNum * 100);
+      // (*bar).set_progress((double)step / step_num * 100);
       // only update once when the progress bar increases by 1%
       if (i_e % (episode / 100) == 0) {
         (*bar).tick();
@@ -302,7 +302,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
     double reward_two_players =
         0;  // TODO: this is only one step reward computing from the donor's
             // reward + recipient's reward
-    for (int step = 0; step < stepNum; step++) {
+    for (int step = 0; step < step_num; step++) {
       // The random number of 0-population is extracted
       // i_1 as donor, i_2 as recipient
       int i_1 = dis(gen_don);
@@ -341,7 +341,7 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
       }
 
       const vector<double>& rewards =
-          rewardMatrix.getReward(donor_action, recipient_action);
+          reward_matrix.getReward(donor_action, recipient_action);
       double donor_r = rewards[0];
       double recipient_r = rewards[1];
       reward_two_players += (donor_r + recipient_r);
@@ -385,8 +385,8 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
     }
     if (i_e % log_step == 0) {
       const string& log_line =
-          printStatistics(donors, recipients, donorStrategies,
-                          recipientStrategies, i_e, good_rep_num, stepNum,
+          printStatistics(donors, recipients, donor_strategies,
+                          recipient_strategies, i_e, good_rep_num, step_num,
                           cooperate_times, reward_two_players, population);
       out.print("{}\n", log_line);
     }
