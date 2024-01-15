@@ -71,11 +71,6 @@ using namespace boost;
  */
 double fermi(double payoff_current, double payoff_new, double s) {
   double res = 1 / (1 + exp((payoff_current - payoff_new) * s));
-  // if (res > 0.97) {
-  //   cout << payoff_current << "," << payoff_new << "," << s << endl;
-  // }
-  // cout << payoff_current << "," << payoff_new << "," << s << endl;
-  // cout << res << endl;
   return res;
 }
 
@@ -128,8 +123,33 @@ string printStatistics(vector<Player>& donors, vector<Player>& recipients,
 
 /**
  * @brief main function
- *
- * @return int
+ * 
+ * @param step_num 
+ * @param episode 
+ * @param buffer_capacity  the capacity of buffer
+ * @param batch_size 
+ * @param alpha  the learning rate
+ * @param discount  the discount factor
+ * @param population population size
+ * @param s  the parameter of fermi function
+ * @param b 
+ * @param beta 
+ * @param c 
+ * @param gamma 
+ * @param mu 
+ * @param epsilon  the greedy probability
+ * @param beta_boltzmann boltzmann distribution parameter
+ * @param with_boltzmann if true, use boltzmann distribution to select action
+ * @param norm_id 
+ * @param update_step_num 
+ * @param p0 
+ * @param payoff_matrix_config_name 
+ * @param bar 
+ * @param turn_up_progress_bar this is just for the one thread situation during debug
+ * @param dynamic_bar 
+ * @param turn_up_dynamic_bar this is for the multi-thread situation
+ * @param dynamic_bar_id
+ * @param log_step 
  */
 void func(int step_num, int episode, int buffer_capacity, int batch_size,
           double alpha, double discount, int population, double s, int b,
