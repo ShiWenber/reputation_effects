@@ -1,7 +1,7 @@
 /**
  * @file PoolVector.hpp
- * @author ShiWenber (1210169842@qq.com)
- * @brief 尾进头出，维持定长的可下标访存的双向队列
+ * @author 
+ * @brief the deque with fixed length and can be accessed by index, the element is added to the tail and removed from the head
  * @version 0.1
  * @date 2023-11-02
  *

@@ -5,9 +5,9 @@
 
 class Action {
  private:
-  std::string name;  //< 行动名称
-  int id;            //< 行动id
-  double payoff; //< 行动收益
+  std::string name;
+  int id;
+  double payoff;
  public:
   Action(std::string name, int id);
   Action(const Action &action);

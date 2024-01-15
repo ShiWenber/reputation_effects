@@ -1,7 +1,7 @@
 /**
  * @file Bimap.hpp
- * @author ShiWenber (1210169842@qq.com)
- * @brief 双向unordered_map
+ * @author 
+ * @brief bi-directional map
  * @version 0.1
  * @date 2023-11-01
  *

@@ -10,9 +10,9 @@
 class Norm
 {
 private:
-    std::unordered_map<std::string, double> normFunc; //< 更新声誉使用的离散函数
-    std::vector<std::vector<std::string>> normTableStr; //< 更新声誉使用的离散函数
-    std::mt19937 gen;  //< double 随机数生成器
+    std::unordered_map<std::string, double> normFunc; //< the discrete function used to update reputation
+    std::vector<std::vector<std::string>> normTableStr; //< the discrete function used to update reputation
+    std::mt19937 gen;  //< generator for random double
 public:
     Norm(/* args */);
     Norm(std::string csvPath);

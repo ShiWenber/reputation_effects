@@ -8,8 +8,7 @@
 #include <string>
 
 /**
- * @brief Construct a new Reward Matrix:: Reward Matrix object
- * 从RewardMatrix.csv文件中读取奖励矩阵，并构建奖励矩阵对象
+ * @brief Construct a new Reward Matrix:: Reward Matrix object from the csv file
  *
  * @param csvPath
  */
@@ -25,7 +24,6 @@ RewardMatrix::RewardMatrix(std::string csvPath) {
 
   std::vector<std::vector<std::vector<std::string>>> rewardMatrixStr;
 
-  // 读取csv文件
   std::ifstream csvFile(csvPath);
 
   int isRowOne = 1;
@@ -42,26 +40,22 @@ RewardMatrix::RewardMatrix(std::string csvPath) {
     std::string cell;
     if (isRowOne == 1) {
       isRowOne = 0;
-      // 在第一行读取动作集
+      // load row player's actions in first row
       int isColOne = 1;
 
-      // 逐个单元格读取
       while (std::getline(ss, cell, delimiter)) {
         if (isColOne == 1) {
           isColOne = 0;
-          // 将读取到的字符按照:分割
           std::stringstream cell_ss(cell);
           std::string valName;
           std::string players;
-          // 先读掉博弈者名称统计出博弈者数量
           std::getline(cell_ss, players, ':');
           std::stringstream players_ss(players);
           std::string playerName;
           while (std::getline(players_ss, playerName, ' ')) {
-            // std::cout << playerName << std::endl;
             playerNum++;
           }
-          // 读表达式变量，初始值为0
+          // load the variable names in the first cell
           while (getline(cell_ss, valName, ' ')) {
             this->vars[valName] = 0;
           }
@@ -73,7 +67,8 @@ RewardMatrix::RewardMatrix(std::string csvPath) {
     } else {
       rowNum++;
       int temp_colNum = 0;
-      std::getline(ss, cell, delimiter);  //< 读出第一列的动作名
+      // load the action name in the first column
+      std::getline(ss, cell, delimiter);
       this->player1_actions.push_back(Action(cell, player2_actionId++));
       while (std::getline(ss, cell, delimiter)) {
         temp_colNum++;
@@ -93,7 +88,7 @@ RewardMatrix::RewardMatrix(std::string csvPath) {
         rewardMatrixRow.push_back(rewardList);
       }
       if (temp_colNum != colNum) {
-        // 并不是每行都有相同的元素数量
+        // it's not the case that every row has the same number of elements
         std::cerr << "not every row has the same number of elements"
                   << std::endl;
         throw "not every row has the same number of elements";
@@ -110,7 +105,7 @@ RewardMatrix::RewardMatrix(std::string csvPath) {
 }
 
 /**
- * @brief 将rewardMatrix中的表达式计算出值，赋值给rewardMatrix
+ * @brief compute the value of the expression in rewardMatrixStr, and assign the value
  *
  * @return std::vector<std::vector<std::vector<double>>>
  */
@@ -121,11 +116,12 @@ std::vector<std::vector<std::vector<double>>> RewardMatrix::evalRewardMatrix() {
   try {
     mu::Parser p;
     for (auto it = this->vars.begin(); it != this->vars.end(); it++) {
+      // define the variable, first stores the variable name, second stores the variable value
       p.DefineConst(
           it->first,
-          it->second);  //< 定义变量 first 存储变量名，second 存储变量值
+          it->second);  
     }
-    // 按照 this->vars 来设置变量
+    // set the value of the variables according to this->vars
     for (int row = 0; row < this->rewardMatrixStr.size(); row++) {
       for (int col = 0; col < this->rewardMatrixStr[row].size(); col++) {
         for (int player = 0; player < this->rewardMatrixStr[row][col].size();

@@ -8,9 +8,9 @@
 
 class RewardMatrix {
  private:
-  /** 存储表达式 */
+  /** restore the expression */
   std::vector<std::vector<std::vector<std::string>>> rewardMatrixStr;
-  /** 存储数值 */
+  /** restore the value */
   std::vector<std::vector<std::vector<double>>> rewardMatrix;
   int rowNum;
   int colNum;
@@ -18,7 +18,7 @@ class RewardMatrix {
 
   std::vector<Action> player1_actions;
   std::vector<Action> player2_actions;
-  std::map<std::string, double> vars;  //< 用于存储变量名和变量值的字典
+  std::map<std::string, double> vars;  //< the dictionary to store the variable name and value
 
  public:
   RewardMatrix(std::string csvFile);
@@ -33,8 +33,6 @@ class RewardMatrix {
   int getRowNum() const { return this->rowNum; }
   void print() const;
   std::vector<double> getReward(Action const& player1_action, Action const& player2_action) const;
-
-  
 
 };
 

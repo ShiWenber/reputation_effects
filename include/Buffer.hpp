@@ -1,6 +1,6 @@
 /**
  * @file Buffer.hpp
- * @author ShiWenber (1210169842@qq.com)
+ * @author 
  * @brief experience replay buffer pool
  * @version 0.1
  * @date 2023-11-02

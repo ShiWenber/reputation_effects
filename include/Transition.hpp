@@ -1,6 +1,6 @@
 /**
  * @file Transition.hpp
- * @author ShiWenber (1210169842@qq.com)
+ * @author 
  * @brief Markov Transition (state, action, reward, next_state)
  * @version 0.1
  * @date 2023-11-02

@@ -53,7 +53,6 @@ class QTable {
   void setColIndex(const BiMap<std::string, int> &colIndex) { this->colIndex = colIndex; }
 
   void update(Transition const& transitions, double alpha, double discount);
-  void updateBoltzmann(Transition const& transitions, double alpha, double discount);
 
 };
 

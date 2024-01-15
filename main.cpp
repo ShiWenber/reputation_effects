@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @author ShiWenber (1210169842@qq.com)
+ * @author 
  * @brief  the simulation of the evolution of cooperation based on q-learning
  * @version 0.1
  * @date 2023-12-25
@@ -11,7 +11,6 @@
 
 #include <cmath>
 #include <iostream>
-// 导入字典类型
 #include <fmt/os.h>
 #include <fmt/ranges.h>
 #include <gflags/gflags.h>
@@ -24,8 +23,6 @@
 #include <fstream>
 #include <map>
 #include <string>
-// #include <execution>
-// #include <tbb/task.h>
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
 
@@ -83,73 +80,7 @@ double fermi(double payoff_current, double payoff_new, double s) {
 }
 
 /**
- * @brief Get the Coop Rate object,
- * we randomly select two people from the population to play the game. Because
- * there are identity differences between the two people, it is ordered, and
- * there are A_n^2 = n * (n - 1) possible
- *
- * Among all these possible extractions, the number of times the *donor*
- * cooperate is used as the numerator
- *
- * so the cooperation rate is possibleCoopNum / (n * (n - 1))
- *
- * This only reflects the probability of the donor to make a donation, and does
- * not reflect the probability of the recipient to give feedback
- *
- * @param strategyPair2Num
- * @param population
- * @return double
- */
-double getCoopRate(
-    const unordered_map<string, set<int>>& strategyName2donorId,
-    const unordered_map<string, set<int>>& strategyName2recipientId,
-    const int& population,
-    const unordered_map<string, set<int>>& reputation2Id) {
-  double temp_sum = 0;
-  const int& n = population;
-  int good_rep_num = reputation2Id.at("1").size();
-
-  for (auto& [do_stg_name, donorIdSet] : strategyName2donorId) {
-    if (do_stg_name == "C") {
-      temp_sum += donorIdSet.size() * (n - 1);
-    } else if (do_stg_name == "D") {
-      // do nothing
-    } else if (do_stg_name == "DISC") {
-      // 如果好人中有DISC存在，那么乘 good_rep_num - 1 否则 乘 good_rep_num
-      //// 对集合 reputation2Id["1"] 和 donorIdSet 求交集如果数量 > 0，那么乘
-      /// good_rep_num - 1
-
-      temp_sum +=
-          donorIdSet.size() * good_rep_num;  // error, should reduce the number
-                                             // of "DISC" in good_rep_num
-    } else if (do_stg_name == "NDISC") {
-      // temp_sum += strategyName2donorId.at(do_stg_name).size() * (n - 1);
-      temp_sum += donorIdSet.size() * (n - good_rep_num);
-    } else {
-      cerr << "not support strategy name: " << do_stg_name << endl;
-      throw "not support strategy name";
-    }
-
-    for (auto& [strategyName, recipientIdSet] : strategyName2recipientId) {
-      for (auto& donorId : donorIdSet) {
-        for (auto& recipientId : recipientIdSet) {
-          if (donorId != recipientId) {
-            temp_sum += 1;
-          }
-        }
-      }
-    }
-  }
-
-  return temp_sum / (n * (n - 1));
-}
-
-/**
- * @brief  统计每个策略对的人数同时可以生成log行:
- * step, C-NR, C-SR, C-AR, C-UR, DISC-NR, DISC-SR, DISC-AR, DISC-UR, NDISC-NR,
- * NDISC-SR, NDISC-AR, NDISC-UR, D-NR, D-SR, D-AR, D-UR, C, DISC, NDISC, D, NR,
- * SR, AR, UR, cr
- *
+ * @brief generate a log line
  *
  * @param donors
  * @param recipients
@@ -196,20 +127,7 @@ string printStatistics(vector<Player>& donors, vector<Player>& recipients,
 }
 
 /**
- * @brief 须输入参数案例
- *   // 博弈参数
- * int stepNum = 1000;
- * int population = 200;  // 人数，这里作为博弈对数，100表示100对博弈者
- * double s = 1;          // 费米函数参数
- *
- * int b = 4;      // 公共参数
- * int beta = 3;   // 公共参数
- * int c = 1;      // 公共参数
- * int gamma = 1;  // 公共参数
- * int mu = 0.05;  // 动作突变率
- * int normId = 10;
- *
- *
+ * @brief main function
  *
  * @return int
  */
@@ -222,16 +140,6 @@ void func(int stepNum, int episode, int buffer_capacity, int batch_size,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
           bool turn_up_dynamic_bar = false, int dynamic_bar_id = 0,
           int log_step = 1) {
-  // // Hide cursor
-  // show_console_cursor(false);
-
-  // indicators::ProgressBar bar{
-  //     option::BarWidth{50}, option::Start{" ["}, option::Fill{"*"},
-  //     option::Lead{"*"}, option::Remainder{"-"}, option::End{"]"},
-  //     option::PrefixText{"Progress: "},
-  //     // option::ForegroundColor{Color::yellow},
-  //     option::ShowElapsedTime{true}, option::ShowRemainingTime{true},
-  //     option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}};
 
   string normName = "norm" + to_string(normId);
 
@@ -535,9 +443,8 @@ int main(int argc, char** argv) {
   }
   tbb::task_arena arena(FLAGS_threads);
 
-  // // 硬编码16条进度条 TODO: 由于progressbar 采用单例模式，无法用vector管理
-  // dynamicprogressbar可以加入变长的progressbar引用
-  // 可以尝试用宏来帮助快速构建多个进度条
+  // hardcode 16 progressbars TODO: generalize the number of progressbars
+  // the macro to create progressbar
   CREATE_BAR(0);
   CREATE_BAR(1);
   CREATE_BAR(2);
@@ -546,10 +453,6 @@ int main(int argc, char** argv) {
   CREATE_BAR(5);
   CREATE_BAR(6);
   CREATE_BAR(7);
-
-  // DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
-  //                                   bar7);
-
   CREATE_BAR(8);
   CREATE_BAR(9);
   CREATE_BAR(10);
@@ -561,31 +464,6 @@ int main(int argc, char** argv) {
   DynamicProgress<ProgressBar> bars(bar0, bar1, bar2, bar3, bar4, bar5, bar6,
                                     bar7, bar8, bar9, bar10, bar11, bar12,
                                     bar13, bar14, bar15);
-
-  // 博弈参数
-  // int stepNum = 100000;
-  // int population =
-  //     160;  //
-  //     由于初始化的时候采用了每个策略对相同数量的设置，因此population必须是
-  //           // 4 * 4 的倍数
-
-  // if (FLAGS_population % 16 != 0) {
-  //   cerr << "population must be a multiple of 16" << endl;
-  //   return 0;
-  // }
-
-  // double s = 1;  // 费米函数参数
-
-  // int b = 4;      // 公共参数
-  // int beta = 3;   // 公共参数
-  // int c = 1;      // 公共参数
-  // int gamma = 1;  // 公共参数
-  // // double mu = 0.05;  // 动作突变率
-  // double mu = 0.1;
-  // int normId = 10;  // 均衡为 d-nr
-  // double p0 = 1;
-  // // int normId = 9;
-  // int updateStepNum = 1;  // 表示每隔多少步更新一次策略
 
   show_console_cursor(false);
 

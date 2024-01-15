@@ -4,7 +4,6 @@
 #include <map>
 #include <string>
 #include <unordered_map>
-// 有序集合类型
 #include <iostream>
 #include <random>
 #include <set>
@@ -42,13 +41,10 @@ class Player {
 
   std::vector<Strategy> strategies;
 
-  double deltaScore;  //< 最近一次upScore时产生的收益变化
-
   std::map<std::string, double> vars;
 
-  /** 针对q-learning 训练场景下 strategy 未确定的属性，区分：strategy
-   * 代表确定的策略，由csv文件存储，并通过hash方式被读取为一个离散函数，而
-   * q-table 则是一个单纯的二维数组 */
+  /** diff with strategy, q-table is a 2-d array which need to be trained
+   * with need to train, and strategy is a function for the determined strategy */
   QTable qTable;
 
  public:
@@ -58,7 +54,7 @@ class Player {
          const std::vector<std::string> &colNames);
   ~Player();
 
-  /** 根据输入返回一个动作，需要strategyTables */
+  /** according the input, return an action, need strategyTables */
   Action donate(std::string const &recipientReputation, double epsilon,
                 double beta_boltzmann, double action_error_p = 0,
                 bool train = false, bool with_boltzmann = false);
@@ -67,14 +63,6 @@ class Player {
                 double beta_boltzmann, double action_error_p = 0,
                 bool train = false, bool with_boltzmann = false);
 
-  /**根据查询到的收益的delta值，更新分数*/
-  void updateScore(double delta) {
-    this->deltaScore += delta;
-    this->score += delta;
-  };
-
-  void clearDeltaScore() { this->deltaScore = 0; }
-
   std::string getName() const { return this->name; }
   void setName(const std::string &name) { this->name = name; }
 
@@ -82,10 +70,6 @@ class Player {
   void setScore(int score) { this->score = score; }
 
   std::vector<Action> getActions() const { return this->actions; }
-  // std::vector<Action>
-  // void setActions(const std::vector<Action> &actions) {
-  //   this->actions = actions;
-  // }
 
   std::vector<double> getActionPossibility() const {
     return this->actionPossibility;
@@ -96,7 +80,6 @@ class Player {
   void setStrategy(const Strategy &strategy) { this->strategy = strategy; }
   void setStrategy(const std::string &strategyName);
 
-  // 公共信息维护函数
   static std::map<std::string, double> getCommonInfo() {
     return Player::commonInfo;
   }
@@ -172,23 +155,21 @@ class Player {
     this->strategies = strategies;
   }
 
-  // 随机性行为，基于对象内部的随机数生成器，由于使用了
-  // 随机数生成器，随机行为不能用const修饰
+  /** random action based on the random generator in the object. for the
+   * convenience of the test, the random action can not be const */
   Strategy getRandomOtherStrategy(std::vector<Strategy> &alterStrategy);
   Action getRandomAction(std::vector<Action> const &alterAction);
 
-  // 抛出一个0-1的概率
+  //! return a probability 0-1
   double getProbability();
   int getRandomInt(int start, int end);
 
-  double getDeltaScore() const { return this->deltaScore; }
-
-  // 通过 strategyTable 出动作
+  // return the action according to the strategy table
   Action getActionFromStrategyTable(
       const std::string &strategyName,
       const std::string &recipientReputation) const;
 
-  // 通过 qTable 出动作
+  // return the action according to the q table
   Action getActionFromQTable(const std::string &input, double epsilon,
                              double beta_boltzmann,
                              bool with_boltzmann = false);
@@ -196,11 +177,7 @@ class Player {
   void updateQTable(std::vector<Transition> const &transitions, double alpha,
                     double discount);
 
-  /**
-   * @brief Get the Strategy Name From Q Table object
-   *
-   * @return std::string
-   */
+  //! Get the Strategy Name From Q Table object
   std::string getStrategyNameFromQTable(int player_type);
 };
 
