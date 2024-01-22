@@ -64,6 +64,10 @@ make
 
 For loading the config file in `./norm`, `./strategy` and so on, you may need to move the exe file to the root of the project before running it.
 
+## 理论推导
+
+见 [符号计算ipynb](./formula/game.ipynb)
+
 ---
 
 ## 混合策略-纯策略
