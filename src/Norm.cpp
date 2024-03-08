@@ -32,7 +32,7 @@ void Norm::loadNormFunc(std::string csvPath) {
 
     std::string line;
     while (std::getline(csvFile, line)) {
-      // 清除line中的"\r"
+      // remove the line in the end "r"
       std::string target = "\r";
       int pos = line.find(target);
       int n = line.size();
@@ -54,20 +54,19 @@ void Norm::loadNormFunc(std::string csvPath) {
     std::cerr << e.what() << '\n';
   }
 
-  // TODO: 将输入的表转置可以节省复杂度
-  // 生成strategyFunc，用来加速查表
+  // generated strategyFunc, which is used to speed up the look-up table
   std::string key = "";
-  // 按列遍历所有的strategyTable
+  // according to iterate over all strategyTable list
   for (int col = 0; col < this->normTableStr[0].size(); col++) {
-    // 按行遍历所有的strategyTable
+    // by strategyTable traveled through all
     for (int row = 0; row < this->normTableStr.size(); row++) {
-      // 如果是最后一行，则为输出
+    // if the last line is for the output
       if (row == this->normTableStr.size() - 1) {
         this->normFunc[key] = std::stod(this->normTableStr[row][col]);
-        // 还原 key 值为初始值
+        // restore the key value of the initial value
         key = "";
       } else {
-        // 如果不是最后一行，则为输入
+        // if it wasn't the last line, for the input
         key += "!" + this->normTableStr[row][col];
       }
     }
@@ -84,8 +83,6 @@ double Norm::getReputation(Action const& donorAction,
   if (reputation_error_p == 0.0) {
     return res;
   }
-
-  
   if (this->getProbability() < reputation_error_p) {
     if (res == 1.0) {
       res = 0.0;

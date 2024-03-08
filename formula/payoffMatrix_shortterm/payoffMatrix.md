@@ -4,7 +4,7 @@ norm0
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm1
@@ -13,7 +13,7 @@ norm1
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm2
@@ -22,7 +22,7 @@ norm2
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm3
@@ -31,7 +31,7 @@ norm3
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm4
@@ -40,7 +40,7 @@ norm4
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm5
@@ -49,7 +49,7 @@ norm5
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm6
@@ -58,7 +58,7 @@ norm6
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm7
@@ -67,7 +67,7 @@ norm7
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm8
@@ -76,7 +76,7 @@ norm8
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm9
@@ -85,7 +85,7 @@ norm9
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm10
@@ -94,7 +94,7 @@ norm10
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm11
@@ -103,7 +103,7 @@ norm11
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm12
@@ -112,7 +112,7 @@ norm12
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm13
@@ -121,7 +121,7 @@ norm13
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm14
@@ -130,7 +130,7 @@ norm14
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 
 norm15
@@ -139,6 +139,6 @@ norm15
 |---|---|---|---|---|
 |C|$- c, \quad b$|$\beta - c, \quad b - \gamma$|$- c, \quad b$|$\beta - c, \quad b - \gamma$|
 |DISC|$- c p, \quad b p$|$p \left(\beta - c\right), \quad p \left(b - \gamma\right)$|$- \beta p + \beta - c p, \quad b p + \gamma \left(p - 1\right)$|$\beta - c p, \quad b p - \gamma$|
-|NDISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
+|ADISC|$c \left(p - 1\right), \quad b \left(1 - p\right)$|$- \left(\beta - c\right) \left(p - 1\right), \quad - \left(b - \gamma\right) \left(p - 1\right)$|$\beta p + c \left(p - 1\right), \quad - b p + b - \gamma p$|$\beta + c p - c, \quad - b p + b - \gamma$|
 |D|$0, \quad 0$|$0, \quad 0$|$\beta, \quad - \gamma$|$\beta, \quad - \gamma$|
 

@@ -15,27 +15,21 @@ PayoffMatrix::PayoffMatrix() {}
 
 /**
  * @brief Construct a new Payoff Matrix:: Payoff Matrix object
- * TODO:
- * 对csv文件中的表达式进行字母判断，保证所有表达式中出现的变量名都被第一行第一列的单元格声明过
- * TODO: 这里读出了博弈者名称，可以直接在该函数中初始化Player
  *
  * @param csvPath
  */
 PayoffMatrix::PayoffMatrix(std::string csvPath) {
-  char delimiter = ',';  //< 分隔符
+  char delimiter = ',';
 
   int rowNum = 0;
   int colNum = 0;
   int playerNum = 0;
 
-  // 读取csv文件
   std::ifstream csvFile(csvPath);
 
   int isRowOne = 1;
   std::string line;
-  // 逐行读取
   while (std::getline(csvFile, line)) {
-    // 从line中去除'\r'
     std::string target = "\r";
     int pos = line.find(target);
     int n = line.size();
@@ -46,30 +40,23 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
     std::vector<std::vector<std::string>> payoffMatrixRow;
     std::stringstream ss(line);
     std::string cell;
-    // 逐个单元格读取
     if (isRowOne == 1) {
       isRowOne = 0;
-      // 在第一行读取动作集
       int strategyId = 0;
       int isColOne = 1;
-      // 逐个单元格读取
       while (std::getline(ss, cell, delimiter)) {
         if (isColOne == 1) {
           isColOne = 0;
-          // 将读取到的字符按照:分割
           std::stringstream cell_ss(cell);
           std::string valName;
           std::string players;
-          // 先读掉博弈者名称统计出博弈者数量
           getline(cell_ss, players, ':');
           std::stringstream players_ss(players);
           std::string playerName;
           while (getline(players_ss, playerName, ' ')) {
-            // TODO: 这里可以读出博弈者名称
             // std::cout << playerName << std::endl;
             playerNum++;
           }
-          // 读表达式变量，初始值为0
           while (getline(cell_ss, valName, ' ')) {
             this->vars[valName] = 0;
           }
@@ -91,7 +78,7 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
         std::vector<std::string> payoffList;
         int temp_playerNum = 0;
         while (std::getline(cell_ss, payoffForOnePlayer_str,
-                            ':')) {  //< :分割所有参与者的收益
+                            ':')) {
           temp_playerNum++;
           payoffList.push_back(payoffForOnePlayer_str);
         }
@@ -103,7 +90,7 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
         payoffMatrixRow.push_back(payoffList);
       }
       if (temp_colNum != colNum) {
-        // 并不是每行都有相同的元素数量
+        // is not have the same number of elements in a row
         std::cerr << "not every row has the same number of elements"
                   << std::endl;
         throw "not every row has the same number of elements";
@@ -116,24 +103,23 @@ PayoffMatrix::PayoffMatrix(std::string csvPath) {
   this->rowNum = rowNum;
   this->playerNum = playerNum;
 
-  //   释放所有资源
+  // release the file
   csvFile.close();
 }
 
 PayoffMatrix::~PayoffMatrix() {}
 
 /**
- * @brief 根据两个动作返回收益列表
+ * @brief return the payoff list of the two actions
  *
  * @param strategyA
  * @param strategyB
  * @return std::vector<double>
- * 返回的第一个元素是动作A的实施者的收益，第二个元素是动作B的实施者的收益，这将会把原本payoffmatrix元素中的表达式的值计算出来
- * TODO: 完成输出值从string表达式到double的转换
+ * the first element is the payoff of the player who implement the action A, the second element is the payoff of the player who implement the action B, this will calculate the value of the expression in the payoffmatrix element
  */
 std::vector<double> PayoffMatrix::getPayoff(const Strategy &strategyA,
                                             const Strategy &strategyB) const {
-  // strategyA必须来自行策略集，strategyB必须来自列策略集
+  // strategyA must come from the row strategy set, and strategyB must come from
   assert(std::find(this->rowStrategies.begin(), this->rowStrategies.end(),
                    strategyA) != this->rowStrategies.end());
   assert(std::find(this->colStrategies.begin(), this->colStrategies.end(),
@@ -163,13 +149,13 @@ std::vector<std::vector<std::vector<double>>> PayoffMatrix::evalPayoffMatrix() {
     for (auto it = this->vars.begin(); it != this->vars.end(); it++) {
       p.DefineConst(it->first, it->second);
     }
-    // 按照this->vars来设置变量
+    // according to this->vars to set the vars
 
     for (int row = 0; row < this->payoffMatrixStr.size(); row++) {
       for (int col = 0; col < this->payoffMatrixStr[row].size(); col++) {
         for (int player = 0; player < this->payoffMatrixStr[row][col].size();
              player++) {
-          // payoff表达式
+          // the payoff expression
           std::string payoffStrExp = this->payoffMatrixStr[row][col][player];
           p.SetExpr(payoffStrExp);
           this->payoffMatrix[row][col][player] = p.Eval();
