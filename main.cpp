@@ -144,7 +144,7 @@ double getCoopRate(
           good_rep_in_disc++;
         }
       }
-      // the good rep in disc will not encounter themselves, so they cooperate with good_rep_num - 1 people. The bad rep in disc will encounter good_rep_num people
+      // the good rep in disc will not encounter themselves, so they cooperate with good_rep_num - 1 people. The bad rep in disc encountering good_rep_num people will cooperate.
       temp_sum += good_rep_in_disc * (good_rep_num - 1) + (donor_id_set.size() - good_rep_in_disc) * good_rep_num;
     } else if (do_stg_name == "ADISC") {
       // record the number of people with reputation 0 in disc
