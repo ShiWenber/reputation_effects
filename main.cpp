@@ -126,44 +126,61 @@ double getCoopRate(
     const unordered_map<string, set<int>>& strategyName2donorId,
     const unordered_map<string, set<int>>& strategyName2recipientId,
     const int population,
-    const unordered_map<string, set<int>>& reputation2Id, const vector<Player>& donors, const vector<Player>& recipients) {
+    const unordered_map<string, set<int>>& reputation2Id, vector<Player>& donors, vector<Player>& recipients) {
   double temp_sum = 0;
   const int n = population;
   int good_rep_num = reputation2Id.at("1").size();
 
-  for (auto& [do_stg_name, donor_id_set] : strategyName2donorId) {
-    if (do_stg_name == "C") {
-      temp_sum += donor_id_set.size() * (n - 1);
-    } else if (do_stg_name == "D") {
-      // do nothing
-    } else if (do_stg_name == "DISC") {
-      // record the number of people with reputation 1 in disc
-      int good_rep_in_disc = 0;
-      for (const auto& id: donor_id_set) {
-        if (recipients[id].getVarValue(REPUTATION_STR) == 1.0) {
-          good_rep_in_disc++;
-        }
-      }
-      // the good rep in disc will not encounter themselves, so they cooperate with good_rep_num - 1 people. The bad rep in disc encountering good_rep_num people will cooperate.
-      temp_sum += good_rep_in_disc * (good_rep_num - 1) + (donor_id_set.size() - good_rep_in_disc) * good_rep_num;
-    } else if (do_stg_name == "ADISC") {
-      // record the number of people with reputation 0 in disc
-      // TODO: ADISC / adisc
-      int bad_rep_in_ndisc = 0;
-      for (const auto& id: donor_id_set) {
-        if (recipients[id].getVarValue(REPUTATION_STR) == 0.0) {
-          bad_rep_in_ndisc++;
-        }
-      }
-      temp_sum += bad_rep_in_ndisc * (n - good_rep_num - 1) + (donor_id_set.size() - bad_rep_in_ndisc) * (n - good_rep_num);
-    } else {
-      cerr << "not support strategy name: " << do_stg_name << endl;
-      throw "not support strategy name";
+  // for (auto& [do_stg_name, donor_id_set] : strategyName2donorId) {
+  //   if (do_stg_name == "C") {
+  //     temp_sum += donor_id_set.size() * (n - 1);
+  //   } else if (do_stg_name == "D") {
+  //     // do nothing
+  //   } else if (do_stg_name == "DISC") {
+  //     // record the number of people with reputation 1 in disc
+  //     int good_rep_in_disc = 0;
+  //     for (const auto& id: donor_id_set) {
+  //       if (recipients[id].getVarValue(REPUTATION_STR) == 1.0) {
+  //         good_rep_in_disc++;
+  //       }
+  //     }
+  //     // the good rep in disc will not encounter themselves, so they cooperate with good_rep_num - 1 people. The bad rep in disc encountering good_rep_num people will cooperate.
+  //     temp_sum += good_rep_in_disc * (good_rep_num - 1) + (donor_id_set.size() - good_rep_in_disc) * good_rep_num;
+  //   } else if (do_stg_name == "ADISC") {
+  //     // record the number of people with reputation 0 in disc
+  //     // TODO: ADISC / adisc
+  //     int bad_rep_in_ndisc = 0;
+  //     for (const auto& id: donor_id_set) {
+  //       if (recipients[id].getVarValue(REPUTATION_STR) == 0.0) {
+  //         bad_rep_in_ndisc++;
+  //       }
+  //     }
+  //     temp_sum += bad_rep_in_ndisc * (n - good_rep_num - 1) + (donor_id_set.size() - bad_rep_in_ndisc) * (n - good_rep_num);
+  //   } else {
+  //     cerr << "not support strategy name: " << do_stg_name << endl;
+  //     throw "not support strategy name";
+  //   }
+  // }
+  // double res = temp_sum / (n * (n - 1));
+  // assert(res >= 0 && res <= 1);
+
+  // play the game for coop_game_times times, and count the number of times the donor cooperates
+  // TODO: there are some not good random number generator rand(), it should be replaced by the c++11 random number generator
+  int game_times = 1000;
+  int coop_times = 0;
+  for(int i = 0; i < game_times; i++) {
+    int donor_id = rand() % n;
+    int recipient_id = rand() % n;
+    while(donor_id == recipient_id) {
+      recipient_id = rand() % n;
+    }
+    Action const &donor_action = donors.at(donor_id).donate(to_string((int)recipients.at(recipient_id).getVarValue(REPUTATION_STR)), 0.0);
+    Action const &recipient_action = recipients.at(recipient_id).reward(donor_action.getName(), 0.0);
+    if (recipient_action.getName() == "C" && donor_action.getName() == "C") {
+      coop_times++;
     }
   }
-  double res = temp_sum / (n * (n - 1));
-  assert(res >= 0 && res <= 1);
-
+  double res = static_cast<double>(coop_times) / game_times;
   return res;
 }
 
@@ -221,7 +238,7 @@ double getAvgPayoff(
  * @return string 
  */
 string printStatistics(
-    const vector<Player>& donors, const vector<Player>& recipients,
+    vector<Player>& donors, vector<Player>& recipients,
     const vector<Strategy>& donorStrategies,
     const vector<Strategy>& recipientStrategies,
     const unordered_map<string, set<int>>& strategyName2DonorId,
