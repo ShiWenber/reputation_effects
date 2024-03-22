@@ -270,3 +270,7 @@ log/
 *.lnk
 # 忽略硬链接
 *.ln
+
+*.png
+*.pdf
+*.jpg
