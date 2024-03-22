@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(reputation_effects VERSION 0.1.0 LANGUAGES C CXX)
 
-set(CMAKE_TOOLCHAIN_FILE "/home/shiwenbo/git/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+set(CMAKE_TOOLCHAIN_FILE "/home/shiwenbo/git/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file" FORCE)
+set(VCPKG_INSTALL_PATH "/home/shiwenbo/git/vcpkg/installed/x64-linux" CACHE STRING "Vcpkg install path" FORCE)
 
 include(${CMAKE_TOOLCHAIN_FILE})
 
@@ -59,20 +60,48 @@ find_package(gflags CONFIG REQUIRED)
 # find_package(Boost REQUIRED [COMPONENTS <libs>...])
 # 寻找 boost-json 库
 find_package(Boost REQUIRED COMPONENTS json)
+find_package(GTest CONFIG REQUIRED)
 
+set(VCPKG_LIBS
+    muparser::muparser
+    fmt::fmt
+    TBB::tbb TBB::tbbmalloc
+    indicators::indicators
+    gflags::gflags
+    Boost::boost Boost::json
+)
+
+# vcpkg include and custom include
 include_directories(include)
+include_directories(${VCPKG_INSTALL_PATH}/include)
 
+# custom library
 aux_source_directory(src SRC_FILES)
+add_library(mylib ${SRC_FILES})
 
-add_executable(${CMAKE_PROJECT_NAME} main.cpp ${SRC_FILES})
+# main
+add_executable(${CMAKE_PROJECT_NAME} main.cpp)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE mylib)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${VCPKG_LIBS})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE muparser::muparser)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE fmt::fmt)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE TBB::tbb TBB::tbbmalloc)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE indicators::indicators)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gflags::gflags)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Boost::boost Boost::json)
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE muparser::muparser)
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE fmt::fmt)
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE TBB::tbb TBB::tbbmalloc)
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE indicators::indicators)
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gflags::gflags)
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Boost::boost Boost::json)
 
+# test
+set(TESTS MyRandomTest NormTest)
+
+foreach(TEST ${TESTS})
+    message(STATUS "Adding test: ${TEST}")
+    add_executable(${TEST} tests/${TEST}.cpp)
+    target_link_libraries(${TEST} PRIVATE mylib)
+    target_link_libraries(${TEST} PRIVATE ${VCPKG_LIBS})
+    target_link_libraries(${TEST} PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+    add_test(NAME ${TEST} COMMAND ${TEST})
+endforeach()
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

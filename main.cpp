@@ -343,8 +343,8 @@ string printStatistics(
  * @param dynamic_bar_id
  * @param log_step
  */
-void func(int step_num, int population, double s, int b, int beta, int c,
-          int gamma, double mu, int norm_id, int update_step_num, double p0,
+void func(int step_num, int population, double s, double b, double beta, double c,
+          double gamma, double mu, int norm_id, int update_step_num, double p0,
           string payoff_matrix_config_name, ProgressBar* bar = nullptr,
           bool turn_up_progress_bar = false,
           DynamicProgress<ProgressBar>* dynamic_bar = nullptr,
@@ -704,10 +704,10 @@ void func(int step_num, int population, double s, int b, int beta, int c,
 DEFINE_int32(stepNum, 1000, "the number of steps");
 DEFINE_int32(population, 160, "the number of population");
 DEFINE_double(s, 1, "the parameter of fermi function");
-DEFINE_int32(b, 4, "the parameter of payoff matrix");
-DEFINE_int32(beta, 3, "the parameter of payoff matrix");
-DEFINE_int32(c, 1, "the parameter of payoff matrix");
-DEFINE_int32(gamma, 1, "the parameter of payoff matrix");
+DEFINE_double(b, 4, "the parameter of payoff matrix");
+DEFINE_double(beta, 3, "the parameter of payoff matrix");
+DEFINE_double(c, 1, "the parameter of payoff matrix");
+DEFINE_double(gamma, 1, "the parameter of payoff matrix");
 DEFINE_double(mu, 0.0001, "the probability of mutation");
 // DEFINE_int32(normId, 10, "the id of norm");
 DEFINE_int32(updateStepNum, 1, "the number of steps to update strategy");
@@ -716,6 +716,9 @@ DEFINE_int32(logStep, 1, "the number of steps to log");
 DEFINE_int32(threads, 11, "the number of threads");
 DEFINE_string(payoff_matrix_config_name, "payoffMatrix_longterm_no_norm_error",
               "the name of payoff matrix config");
+// the [start_norm_id, end_norm_id) will be simulated
+DEFINE_int32(start_norm_id, 0, "the start norm id");
+DEFINE_int32(end_norm_id, 16, "the end norm id");
 
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(
@@ -790,7 +793,7 @@ int main(int argc, char** argv) {
     //        p0, nullptr, false, &bars, true, stepNum - start);
     // });
 
-    tbb::parallel_for(0, 16, [&](int normId) {
+    tbb::parallel_for(FLAGS_start_norm_id, FLAGS_end_norm_id, [&](int normId) {
       func(FLAGS_stepNum, FLAGS_population, FLAGS_s, FLAGS_b, FLAGS_beta,
            FLAGS_c, FLAGS_gamma, FLAGS_mu, normId, FLAGS_updateStepNum,
            FLAGS_p0, FLAGS_payoff_matrix_config_name, nullptr, false, &bars,
